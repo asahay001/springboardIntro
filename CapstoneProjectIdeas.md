@@ -1,4 +1,4 @@
-# Springboard Capstone project ideas                                           Amitav Sahay
+# Springboard Capstone project ideas                                           (Amitav Sahay)
 
 ## Introduction
 
