@@ -1,4 +1,4 @@
-# Springboard capstone project ideas
+# Springboard Capstone project ideas                                           Amitav Sahay
 
 ## Introduction
 
@@ -21,4 +21,5 @@ Ball-by-ball data for IPL T20 cricket is available from 2008 through 2017. Its p
 ## Data Manipulations
 Some data wrangling would be necessary for this project. e.g. joining across the 4 files; summing the scores at the end of 5th, 10th and 15th overs for each match for each innings; or calculating the strike rate and economy rate and computing and adding the 2-3 match winning performes for each match to the match file. 
 
+## Conclusion
 Based on preliminary discussion with my mentor, Nathan, I will like to proceed with Idea 1 for my Capstone project. 
