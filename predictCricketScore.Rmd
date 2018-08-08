@@ -16,13 +16,28 @@ Based on the score predictions, I will also attempt to predict a win probablilit
 
 Showing these types of predictions during a match is quite common these days, and while I will not be attempting a new solution, this project will help me apply my data science skills to a real world event. 
 
+I am aware of the following caveats which I will investigate if they have a bearing on the predictive model:
+
+  1. Not all teams have participated in all the 10 years for which data will be analyzed. There are a total of 13 teams across the 10 years. Teams who have not played every year are: 
+        Kochi Tuskers Kerala:     2011  only 
+        Gujarat Lions:            2016-2017
+        Rising Pune Supergiants:  2016, 2017        Pune Warriors:      2011-2013  
+        Sunrisers Hyderabad:      2013-2017         Deccan Chargers:    2008-2012  
+        Chennai Super Kings did not play in 2016 and 2017. 
+        
+        For the analysis, we will consider Chennai Super Kings as a regular team since they have played in 8 of the 10 years. And I may combine the two Hyderbad-based teams, Sunrisers Hyderabad and Deccan Chargers, to represent one entity.
+        
+  2. In 2009, all matches were played in South Africa, not India. 
+  
+  3. The biggest assumption is that even though some of the players have played for multiple teams over the years, for the analysis to building the score predictive model, I will ignore the individuals and concentrate only on team performance. My reasoning is that even though a player may move from one team to another after a couple of years, any team retains majority of its players from one year to the next; a team's composition changes only gradually over years; typically one star player is replaced with another. 
+
 ## 2. Who is your client and why do they care about this problem? In other words, what will your client DO or DECIDE based on your analysis that they wouldn’t have otherwise?
 An IPL T20 season typically runs for 45 days with about 8 franchises participating. Each franchise has a huge fan following based largely on the region the franchise is located at, but also on specific star cricketers. Matches are held in the evenings after most people have finished their day and are ready to relax in front of their TV sets. Often whole families watch a match since the matches are often close and finish around nap time. There are discussions among those watching together about the scores each of the two teams will put up that evening and who will win. Instead of gut, I can provide these eager spectators (and the TV channel carrying the matches) with better guesstimates based on data science applied to historical data. 
 
 So for instance during a match between Mumbai Indians and Delhi Daredevils, fans of both teams, tens of thousands of them, hope their favorite team will score x number of runs and will restrict the other team to less than that. Fans constantly make and revise these predictions as fortunes fluctuate during a match. This frenzy happens every evening during the tournament for more than a month. If I can build a predictive scoring model based on various relevant historical data, such that the score predictions are mor eaccurate than gut-based, TV commentators and analysts will be able to share this information with the spectators before they unfold, and the involved audience will have more realsitic expectations. With each passing year, more data gets generated, and it is not possible for most human minds to synthesize this data to predict scores accurately. Realistic updates throughout a match makes for a better informed fan and more interactive watching. 
 
 ## 3. What data are you going to use for this? How will you acquire this data?
-Ball-by-ball data for IPL T20 cricket is available for 10 years, from 2008 through 2017, in total 637 matches. It was originally published by cricsheet.org in YAML format. It has been transformed into four csv files by a data sceintist and is publicly available [here](https://data.world/raghu543/ipl-data-till-2017) . While the largest file with 15,450 rows has the ball-by-ball details of each match, the other 3 csv files contain: a) Details at match level: match id, venue, year and date of the match, result, margin of victory, etc.; b) Names of each of the global 495 players who have particpated for the clubs over the 10 years; and c) which player played in which match for which team; this file has about 14,000 rows. I would get all my data from 2 files: ball_by_ball.csv and match.csv which can be joined on matchid and Year/Season_Year. Names of teams will also be picked from Match.csv, since Ball_By_Ball.csv only has team IDs. The Ball_By_Ball.csv file has useful data like Over Id, Ball Id, Number of Runs Scored on That Ball, Did someone get Out on that ball; and also many other columns that may not be relevant. 
+Ball-by-ball data for IPL T20 cricket is available for 10 years, from 2008 through 2017, in total 637 matches. It was originally published by cricsheet.org in YAML format. It has been transformed into four csv files by a data sceintist and is publicly available [here](https://data.world/raghu543/ipl-data-till-2017) . While the largest file with 15,450 rows has the ball-by-ball details of each match, the other 3 csv files contain: a) Details at match level: match id, venue, year and date of the match, result, margin of victory, etc.; b) Names of each of the global 495 players who have particpated for the clubs over the 10 years; and c) which player played in which match for which team; this file has about 14,000 rows. Since I am not focusing on players, I will get all my data from only 3 of the 4  files, and ignore Players.csv file.  
 
 ## 4. In brief, outline your approach to solving this problem (knowing that this might change later).
 Since historical data will be used to create a predictive model for next year's matches, it becomes necessary to first test the model against historical data. So while some of the 10 year historical data will be used to build the predictive model, another set of the historical data will be used to test the model. We will start with 2008 data, build a predictive model and test a team's scoring pattern with 2009 data. Then use 2008 + 2009 data and test with 2010 data. Then tweak the model with 2008 + 2009 + 2010 data and test against 2011 data. The model will be tweaked iteratively through 2017 data. 
@@ -35,28 +50,30 @@ I will evaluate what variables are relevant to predicting final scores for each 
   4. Whether the team is batting first (setting a target) or second (chasing with the target already known)
   5. Result and scoring pattern of this team against today's opponent over the years
   
-Some data wrangling would be necessary for this project. e.g. joining across 2 files; summing the scores at the end of 5th, 10th and 15th overs for each match for each innings. I may pre-sort the two csv files of interest on Season/Year and MatchID columns. 
+Some data wrangling would be necessary for this project. e.g. joining across 2 files; summing the scores at the end of 5th, 10th and 15th overs for each match for each innings. I may pre-sort the two csv files of interest on Season/Year and MatchID columns. In R, I  will then "join" Ball_By_Ball.csv and Match.csv on matchid and Year/Season_Year. Match.csv will provide result of each match and its venue, while Ball_By_Ball.csv file has useful data like Over Id, Ball Id, Number of Runs Scored on that Ball, Did someone get Out on that Ball; and other columns that may not be relevant. Furthermore, Match.csv provides the Team Ids and the sequence of batting for the two teams, and to get the team names, a "join" to the Team.csv file on Team Id will be done. 
+
+Team.csv will drive the building of data because it has Team Names. It will drive the "join" to Match.csv on Team Id, which wil then "join" with Ball_by_Ball.csv which will provide the scores. 
 
 The final data frame for analysis may look like:
 
-  Team Name
+  Team Name                                           (from Team.csv)
   
-  Year
+  Year                                                (from Match.csv)
   
-  Match Id
+  Match Id                                            (from Match.csv)
   
-  Venue
+  Venue                                               (from Match.csv)
   
-  Opponent Team Name
+  Opponent Team Name                                  (from Ball_By_Ball.csv; not from Match.csv)
   
-  Batting First ? (TRUE/FALSE)
+  Batting First ? (TRUE/FALSE)                        (from Ball_By_Ball)
   
-  Total Overs batted (in terns of number of balls)
+  Total Overs batted (in terms of number of balls)    (from Ball_By_Ball)
   
-  5 Over Scenario (Runs Scored, Wickets Lost), 10 over scenario, 15 over scenario, End of Innings Scenario
+  5 Over stage (Runs Scored, and Wickets Lost), 10 over stage, 15 over stage, End of Innings stage  (computed from Ball_By_Ball.csv)
   
   
-  The list will be expanded in each iteration with the following year's data (i.e., start with 2008 data, then 2008 + 2009 data, etc.)
+  To build the model, the data list will be expanded in each iteration with the following year's data (i.e., start with 2008 data, then 2008 + 2009 data, etc.)
   
   ## 5. What are your deliverables? Typically, this would include code, along with a paper and/or a slide deck.
  **Code**: Code for my project w/ documentation will be uploaded to a GitHub repository.
