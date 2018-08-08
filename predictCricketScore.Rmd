@@ -1,0 +1,24 @@
+---
+title: "predictCricketScore_amitavSahay"
+author: "Amitav Sahay"
+date: "August 8, 2018"
+output: html_document
+---
+
+# Project Proposal: Predict Cricket Score during a match
+
+## 1. What is the problem you want to solve?
+20 overs a side cricket is the short format of a cricket match where each side bats a maximum of 20 overs of 6 balls each and tries to score more runs than the other team. This shortedned version of cricket has caught on with the sports fans and a lot of statistics is now availabe for analysis. Which is perfect because the audience, both on the field and off-field watching on TV, want o guess how each of the two teams playing in a match will fare: how many runs will they score, how fast, which team will win, etc. A particularly popular 20 overs tournament, called IPL T20, is held annually in India and attracts the best cricketers from around the globe, which then brings packed stadiums of spectators and extremely lucrative TV rights.
+
+In this project, I want to predict a team's scoring rate: specifically how many runs will a team score at the end of their 5th over, 10th over, 15th over and the end of the innings which is either at the end of the 20th over or when 10 of its batsmen are out, whichever happens earlier. I will then predict the same for the other team that bats next chasing its opponent's final score: predict the runs it will end up with based on the 2nd team's chase at the end of 5th, 10th and 15th overs.
+
+Based on the score predictions, I will also attempt to predict a win probablility for each side based on the 2nd team's scores at the end of 5th, 10th and 15th overs.
+
+Showing these types of predictions during a match is quite common these days, and while I will not be attempting a new solution, this project will help me apply my data science skills to a real world event. 
+
+## 2. Who is your client and why do they care about this problem? In other words, what will your client DO or DECIDE based on your analysis that they wouldn’t have otherwise?
+An IPL T20 season typically runs for 45 days with about 8 franchises participating. Each franchise has a huge fan following based largely on the region the franchise is located at, but also on specific star cricketers. Matches are held in the evenings after most people have finished their day and are ready to relax in front of their TV sets. Often whole families watch a match since the matches are often close and finish around nap time. There are discussions among those watching together about the scores each of the two teams will put up that evening and who will win. Instead of gut, I can provide these eager spectators (and the TV channel carrying the matches) with better guesstimates based on data science applied to historical data. 
+
+So for instance during a match between Mumbai Indians and Delhi Daredevils, fans of both teams, tens of thousands of them, hope their favorite team will score x number of runs and will restrict the other team to less than that. Fans constantly make and revise these predictions as fortunes fluctuate during a match. This frenzy happens every evening during the tournament for more than a month. If I can build a predictive scoring model based on various relevant historical data, such that the score predictions are mor eaccurate than gut-based, TV commentators and analysts will be able to share this information with the spectators before they unfold, and the involved audience will have more realsitic expectations. With each passing year, more data gets generated, and it is not possible for most human minds to synthesize this data to predict scores accurately. Realistic updates throughout a match makes for a better informed fan and more interactive watching. 
+
+## 3. What data are you going to use for this? How will you acquire this data?
