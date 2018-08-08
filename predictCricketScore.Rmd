@@ -22,7 +22,47 @@ An IPL T20 season typically runs for 45 days with about 8 franchises participati
 So for instance during a match between Mumbai Indians and Delhi Daredevils, fans of both teams, tens of thousands of them, hope their favorite team will score x number of runs and will restrict the other team to less than that. Fans constantly make and revise these predictions as fortunes fluctuate during a match. This frenzy happens every evening during the tournament for more than a month. If I can build a predictive scoring model based on various relevant historical data, such that the score predictions are mor eaccurate than gut-based, TV commentators and analysts will be able to share this information with the spectators before they unfold, and the involved audience will have more realsitic expectations. With each passing year, more data gets generated, and it is not possible for most human minds to synthesize this data to predict scores accurately. Realistic updates throughout a match makes for a better informed fan and more interactive watching. 
 
 ## 3. What data are you going to use for this? How will you acquire this data?
-Ball-by-ball data for IPL T20 cricket is available from 2008 through 2017. Its published by cricsheet.org in YAML format. It has also been transformed into four csv files by a data sceintist and is publicly available here . I plan to use these 4 csv files for the R-based project. While the largest file with 15,450 rows has the ball-by-ball details of each match for 10 years, the other 3 csv files contain: a) Details at match level: match id, venue, date of the match, result, margin of victory, etc.; b) Names of each of the 495 players who have particpated for the clubs over the 10 years; and c) which player played in which match for which team; this file has about 14,000 rows.
+Ball-by-ball data for IPL T20 cricket is available for 10 years, from 2008 through 2017. Its published by cricsheet.org in YAML format. It has been transformed into four csv files by a data sceintist and is publicly available [here](https://data.world/raghu543/ipl-data-till-2017) . While the largest file with 15,450 rows has the ball-by-ball details of each match, the other 3 csv files contain: a) Details at match level: match id, venue, year and date of the match, result, margin of victory, etc.; b) Names of each of the global 495 players who have particpated for the clubs over the 10 years; and c) which player played in which match for which team; this file has about 14,000 rows. I should get all my data from 2 files: ball_by_ball.csv and match.csv which can be joined on matchid. The ball_by_ball.csv file has usefull data like Over Id, Ball Id, Number of Runs Scored on That Ball, Did someone get Out on that ball, and many other columns that may not be relevant. 
 
-Data Manipulations
-Some data wrangling would be necessary for this project. e.g. joining across the 4 files; summing the scores at the end of 5th, 10th and 15th overs for each match for each innings; or calculating the strike rate and economy rate and computing and adding the 2-3 match winning performes for each match to the match file.
+## 4. In brief, outline your approach to solving this problem (knowing that this might change later).
+Since historical data will be used to create a predictive model for next year's matches, it becomes necessary to first test the model against historical data. So while some of the 10 year historical data will be used to build the predictive model, another set of the historical data will be used to test the model. We will start with 2008 data, build a predictive model and test a team's scoring pattern with 2009 data. Then use 2008 + 2009 data and test with 2010 data. Then tweak the model with 2008 + 2009 + 2010 data and test against 2011 data. The model will be tweaked iteratively through 2017 data. 
+
+I will evaluate what variables are relevant to predicting final scores for each team in a match. Variables under consideration are: 
+
+  1. Runs scored at the end of 5, 10, 15 overs and at the end of the innings (typically 20, unless all out or target achieved) before that: called Run Rate
+  2. Wickets lost (number of men out) at the end of 5, 10, and 15 overs: since early wickets lost may impede the scoring rate
+  3. Venue : some grounds are conducive to high scoring matches while some suit bowlers more. This variable may require examining two aspects: a) how this team has scored at this venue and b) how all other teams have averaged on this venue
+  4. Whether the team is batting first (setting a target) or second (chasing with the target already known)
+  5. Result and scoring pattern of this team against today's opponent over the years
+  
+Some data wrangling would be necessary for this project. e.g. joining across 2 files; summing the scores at the end of 5th, 10th and 15th overs for each match for each innings. 
+The data frame may look like:
+
+  Team Name
+  
+  Year
+  
+  Match Id
+  
+  Venue
+  
+  Opponent Team Name
+  
+  Batting First ? (TRUE/FALSE)
+  
+  Total Overs batted (in terns of number of balls)
+  
+  5 Over Scenario (Runs Scored, Wickets Lost), 10 over scenario, 15 over scenario, End of Innings Scenario
+  
+  
+  The list will be expanded in each iteration with next year's data (e.g. 2008 data, then 2208 + 2009 data, etc.)
+  
+  ## 5. What are your deliverables? Typically, this would include code, along with a paper and/or a slide deck.
+ **Code**: code for my project w/ documentation will be uploaded to a GitHub repository.
+  
+**Final Report**: My final report will explain the problem, my approach and findings. This report will also include recommendations for my client for how to use my findings and also delve into future research ideas.
+
+**Slide deck**: slide deck for my project will be uploaded to my GitHub repository.
+
+**Blog/Presentation**:	I will share and present project in an office hours session and promote on a blog
+
