@@ -62,11 +62,23 @@ matDet <- rbind(matDet5Over, matDet10Over, matDet15Over, matDet20Over, matDetEOI
 # Now add the team name with the lookup table team
 ##matDet <- matDet %>% left_join (teams, by = c("Team_Batting" = "Team_Id"))
 
-matDetNum <- matDet %>% filter(as.numeric(Team_Batting) < 20)
-matDetNum <- matDetNum %>% left_join (teams, by = c(as.numeric("Team_Batting") = "Team_Id"))
+matDetNum <-matDet %>% mutate (newBatTeamId = as.character(Team_Batting), newBowlTeamId = as.character(Team_Bowling) ) %>%
+  filter (newBatTeamId < "99") %>% 
+  mutate (Team_Id = as.numeric(newBatTeamId)) %>%
+  #mutate ( Team_Id = as.numeric(Team_Id)) %>% 
+  left_join (teams, by = "Team_Id") %>% select (Team_Batting:inningsMarker, TeamName_Bat = Team_Name, newBowlTeamId) %>%
+  mutate ( Team_Id = as.numeric(newBowlTeamId)) %>% left_join (teams, by = "Team_Id") %>%
+  select(Team_Batting:TeamName_Bat, TeamName_Bowl = Team_Name)
+
+matDetChar <- matDet %>% mutate (newTeamId = as.character (Team_Batting)) %>% filter (newTeamId > "99")
+# IDs are already stored as names for Batting and Bowling teams for this set if rows in the original data file
+matDetChar <- matDetChar %>% mutate (TeamName_Bat = Team_Batting, TeamName_Bowl = Team_Bowling)
+# Now combine the 2 data.frames back into 1:
+matDet <- rbind(matDetNum, matDetChar)
 
 matDet <- matDet %>% left_join(matSumm, by = c("Match_id" = "match_id")) %>%
-  select(Team_Batting, Season, Match_id, Innings_No, Over_id, Ball_id, Team_Bowling, cumRuns, cumWkts, inningsMarker, Venue_Name, match_winner)
+  select(Team_Batting, TeamName_Bat, Season, Match_id, Innings_No, Over_id, Ball_id, Team_Bowling, TeamName_Bowl, cumRuns, cumWkts, 
+         inningsMarker, Venue_Name, match_winner) %>% arrange (TeamName_Bat, Season, Match_id, Innings_No, Over_id, Ball_id )
 
 
 
