@@ -55,6 +55,39 @@ matDet20Over <- matDet %>% group_by (Team_Batting, Season, Match_id, Innings_No)
   filter (Over_id == 20)   %>% group_by (Team_Batting, Season, Match_id, Innings_No) %>% # need to group by again since I cant get it work in one group by
   filter (Ball_id == max(Ball_id)) %>% mutate (inningsMarker = 20)  # -At the end of over 20
 
+##### NEW CODE
+
+
+matDet <- matDet %>% left_join(matDetEOI, by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (Team_Batting, Season, Match_id, Innings_No, Over_id = Over_id.x, Ball_id = Ball_id.x, 
+          Team_Bowling = Team_Bowling.x, cumRuns = cumRuns.x, cumWkts = cumWkts.x, 
+          EOIOver = Over_id.y, EOIBall = Ball_id.y, EOIRuns = cumRuns.y, EOIWkts = cumWkts.y) %>% 
+  left_join(matDet5Over, by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (Team_Batting, Season, Match_id, Innings_No, Over_id = Over_id.x, Ball_id = Ball_id.x, 
+          Team_Bowling = Team_Bowling.x, cumRuns = cumRuns.x, cumWkts = cumWkts.x, 
+          EOIOver, EOIBall, EOIRuns, EOIWkts, 
+          Over5 = Over_id.y, Over5Ball = Ball_id.y, Over5Runs = cumRuns.y, Over5Wkts = cumWkts.y) %>%
+  left_join(matDet10Over, by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (Team_Batting, Season, Match_id, Innings_No, Over_id = Over_id.x, Ball_id = Ball_id.x, 
+          Team_Bowling = Team_Bowling.x, cumRuns = cumRuns.x, cumWkts = cumWkts.x, 
+          EOIOver, EOIBall, EOIRuns, EOIWkts, Over5, Over5Ball, Over5Runs, Over5Wkts, 
+          Over10 = Over_id.y, Over10Ball = Ball_id.y, Over10Runs = cumRuns.y, Over10Wkts = cumWkts.y) %>%
+  left_join(matDet15Over, by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (Team_Batting, Season, Match_id, Innings_No, Over_id = Over_id.x, Ball_id = Ball_id.x, 
+          Team_Bowling = Team_Bowling.x, cumRuns = cumRuns.x, cumWkts = cumWkts.x, 
+          EOIOver, EOIBall, EOIRuns, EOIWkts, Over5, Over5Ball, Over5Runs, Over5Wkts, 
+          Over10, Over10Ball, Over10Runs, Over10Wkts,
+          Over15 = Over_id.y, Over15Ball = Ball_id.y, Over15Runs = cumRuns.y, Over15Wkts = cumWkts.y) %>%
+  left_join(matDet20Over, by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (Team_Batting, Season, Match_id, Innings_No, Over_id = Over_id.x, Ball_id = Ball_id.x, 
+          Team_Bowling = Team_Bowling.x, cumRuns = cumRuns.x, cumWkts = cumWkts.x, 
+          EOIOver, EOIBall, EOIRuns, EOIWkts, Over5, Over5Ball, Over5Runs, Over5Wkts, 
+          Over10, Over10Ball, Over10Runs, Over10Wkts, Over15, Over15Ball, Over15Runs, Over15Wkts,
+          Over20 = Over_id.y, Over20Ball = Ball_id.y, Over20Runs = cumRuns.y, Over20Wkts = cumWkts.y)
+  
+
+##### OLD CODE FROM HERE
+
 #Now combine the data frames from EOI, 5th, 10th, 15th and 20th overs to get consolidated data frame for analysis
 matDet <- rbind(matDet5Over, matDet10Over, matDet15Over, matDet20Over, matDetEOI) %>% 
   arrange (Team_Batting, Season, Match_id, Innings_No, Over_id, Ball_id)  # Go back to the original sorting by team, year and match
@@ -65,7 +98,6 @@ matDet <- rbind(matDet5Over, matDet10Over, matDet15Over, matDet20Over, matDetEOI
 matDetNum <-matDet %>% mutate (newBatTeamId = as.character(Team_Batting), newBowlTeamId = as.character(Team_Bowling) ) %>%
   filter (newBatTeamId < "99") %>% 
   mutate (Team_Id = as.numeric(newBatTeamId)) %>%
-  #mutate ( Team_Id = as.numeric(Team_Id)) %>% 
   left_join (teams, by = "Team_Id") %>% select (Team_Batting:inningsMarker, TeamName_Bat = Team_Name, newBowlTeamId) %>%
   mutate ( Team_Id = as.numeric(newBowlTeamId)) %>% left_join (teams, by = "Team_Id") %>%
   select(Team_Batting:TeamName_Bat, TeamName_Bowl = Team_Name)
