@@ -55,9 +55,6 @@ matDet20Over <- matDet %>% group_by (Team_Batting, Season, Match_id, Innings_No)
   filter (Over_id == 20)   %>% group_by (Team_Batting, Season, Match_id, Innings_No) %>% # need to group by again since I cant get it work in one group by
   filter (Ball_id == max(Ball_id)) %>% mutate (inningsMarker = 20)  # -At the end of over 20
 
-##### NEW CODE
-
-
 matDet <- matDet %>% left_join(matDetEOI, by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
   select (Team_Batting, Season, Match_id, Innings_No, Over_id = Over_id.x, Ball_id = Ball_id.x, 
           Team_Bowling = Team_Bowling.x, cumRuns = cumRuns.x, cumWkts = cumWkts.x, 
@@ -83,134 +80,30 @@ matDet <- matDet %>% left_join(matDetEOI, by = c("Team_Batting", "Season", "Matc
           Team_Bowling = Team_Bowling.x, cumRuns = cumRuns.x, cumWkts = cumWkts.x, 
           EOIOver, EOIBall, EOIRuns, EOIWkts, Over5, Over5Ball, Over5Runs, Over5Wkts, 
           Over10, Over10Ball, Over10Runs, Over10Wkts, Over15, Over15Ball, Over15Runs, Over15Wkts,
-          Over20 = Over_id.y, Over20Ball = Ball_id.y, Over20Runs = cumRuns.y, Over20Wkts = cumWkts.y)
-  
+          Over20 = Over_id.y, Over20Ball = Ball_id.y, Over20Runs = cumRuns.y, Over20Wkts = cumWkts.y) %>%
+  left_join(matSumm, by = c("Match_id" = "match_id")) %>%
+  select(Team_Batting:Over20Wkts, venueGround = Venue_Name, venueCity = City_Name, winner = match_winner)
 
-##### OLD CODE FROM HERE
-
-#Now combine the data frames from EOI, 5th, 10th, 15th and 20th overs to get consolidated data frame for analysis
-matDet <- rbind(matDet5Over, matDet10Over, matDet15Over, matDet20Over, matDetEOI) %>% 
-  arrange (Team_Batting, Season, Match_id, Innings_No, Over_id, Ball_id)  # Go back to the original sorting by team, year and match
-
-# Now add the team name with the lookup table team
-##matDet <- matDet %>% left_join (teams, by = c("Team_Batting" = "Team_Id"))
+# Now add the batting and bowling team names with the lookup table team; Trouble with data "as is" is that 
+# seasons 2008-2016 has numbers in the batting and bolwing team ids, but for season 2017, the actual team names are stored
+# So do the lookup in 2 steps: first for the nueric ids (they actually are factor data types)
 
 matDetNum <-matDet %>% mutate (newBatTeamId = as.character(Team_Batting), newBowlTeamId = as.character(Team_Bowling) ) %>%
-  filter (newBatTeamId < "99") %>% 
-  mutate (Team_Id = as.numeric(newBatTeamId)) %>%
-  left_join (teams, by = "Team_Id") %>% select (Team_Batting:inningsMarker, TeamName_Bat = Team_Name, newBowlTeamId) %>%
+  filter (newBatTeamId < "99") %>% mutate (Team_Id = as.numeric(newBatTeamId)) %>%
+  left_join (teams, by = "Team_Id") %>% 
+  select (TeamName_Bat = Team_Name, Team_Batting:Ball_id, cumRuns:Over20Wkts, 
+          venueGround:winner, Team_Bowling, newBowlTeamId) %>%
   mutate ( Team_Id = as.numeric(newBowlTeamId)) %>% left_join (teams, by = "Team_Id") %>%
-  select(Team_Batting:TeamName_Bat, TeamName_Bowl = Team_Name)
+  select(TeamName_Bat:winner, TeamName_Bowl = Team_Name, Team_Bowling)
 
 matDetChar <- matDet %>% mutate (newTeamId = as.character (Team_Batting)) %>% filter (newTeamId > "99")
 # IDs are already stored as names for Batting and Bowling teams for this set if rows in the original data file
-matDetChar <- matDetChar %>% mutate (TeamName_Bat = Team_Batting, TeamName_Bowl = Team_Bowling)
+matDetChar <- matDetChar %>% mutate (TeamName_Bat = Team_Batting, TeamName_Bowl = Team_Bowling) %>%
+  select(TeamName_Bat, Team_Batting:Ball_id, cumRuns:winner, TeamName_Bowl, Team_Bowling)
 # Now combine the 2 data.frames back into 1:
-matDet <- rbind(matDetNum, matDetChar)
-
-matDet <- matDet %>% left_join(matSumm, by = c("Match_id" = "match_id")) %>%
-  select(Team_Batting, TeamName_Bat, Season, Match_id, Innings_No, Over_id, Ball_id, Team_Bowling, TeamName_Bowl, cumRuns, cumWkts, 
-         inningsMarker, Venue_Name, match_winner) %>% arrange (TeamName_Bat, Season, Match_id, Innings_No, Over_id, Ball_id )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+matDet <- rbind(matDetNum, matDetChar) %>%
+  arrange(TeamName_Bat, Season, Match_id, Innings_No, Over_id, Ball_id)
+  
 
 # build new data frame for analysis from sorted data files for 2008
-matDet2008 <- subset(matDet, subset = Season == 2008)
-
-# initialize variables
-matchID <- 0
-prev_matchID <- matchID
-inningsNum <- 0
-prev_inningsNum <- inningsNum
-overNum <- 1
-prev_overNum <- overNum
-runsOnThisBall <- 0
-wktsOnThisBall <- 0
-wktsInOvers1To5 <- 0
-wktsInOvers6To10 <- 0
-wktsInOvers11To15 <- 0
-wktsAtEndOfInnings <- 0
-runsInOvers1To5 <- 0
-runsInOvers6To10 <- 0
-runsInOvers11To15 <- 0
-runsInOvers16To20 <- 0
-runsAtEndOfInnings <- 0
-overNum <- 0  # current over being read
-ballNum <- 0  # current ball being read
-overGroup <- 0    # 5 for Overs 1-5, or 10 for overs 6-10, or 15 for overs 10-15, or 20 for overs 16-20
-oversBatted <- 0    # Total number of overs faced by a team in a match
-teamName <- ""
-season <- 0
-venue <- ""
-opponentTeam <- ""
-batFirst <- TRUE
-
-
-"  # comment out everything that was following the read line by line logic
-
-teamPerf08_Df <- data.frame(teamName, season, matchID, venue, opponentTeam, batFirst, oversBatted, runsAtEndOfInnings, 
-                          runsInOvers1To5, wktsInOvers1To5, runsInOvers6To10, wktsInOvers6To10, 
-                          runsInOvers11To15, wktsInOvers11To15, runsInOver16To20, wktsAtEndOfInnings) 
-
-for (rowD in 1:nrow(matDet2008)){
-    matchID <- matDet2008[rowD, 1]
-    inningsNum <- matDet2008[rowD, 4]
-   
-  if (rowD == 1) { # 1st row being read from the data file; initialize
-    prev_matchID <- matchID
-    prev_inningsNum <- inningsNum
-    
-  }
-
-  if (matchID == prev_matchID) {     # Data for the same match and same innings
-    inningsNum <- inningsNum <- matDet2008[rowD, 4]
-    
-    if (inningsNum == prev_inningsNum) { # same innings within a match
-      runsOnThisBall <- sum(matDet2008[rowD, 9], matDet2008[rowD, 10])
-      wktsOnThisBall <- matDet2008[rowD, 20] + matDet2008[rowD, 27]
-      ##overNum <- matDet2008[rowD, matDet2008$Over_id]
-      overNum <- matDet2008[rowD, 2]
-      ballNum <- matDet2008[rowD, 3]
-      #ballNum <- matDet2008[rowD, matDet2008$Ball_id]
-      if (overNum < 6) {
-        overGroup <- 5
-        runsInOvers1To5 <- runsInOvers1To5 + runsOnThisBall
-        wktsInOvers1To5 <- wktsInOvers1To5 + wktsOnThisBall
-      } else if (overNum > 5 & overNum < 11) {
-        overGroup <- 10
-        runsInOvers6To10 <- runsInOvers6To10 + runsOnThisBall
-        wktsInOvers6To10 <- wktsInOvers6To10 + wktsOnThisBall
-      } else if (overNum > 10 & overNum < 16) {
-        overGroup <- 15
-        runsInOvers11To15 <- runsInOvers11To15 + runsOnThisBall
-        wktsInOvers11To15 <- wktsInOvers11To15 + wktsOnThisBall
-      } else {
-        overGroup <- 20
-        runsInOvers16To20 <- runsInOvers16To20 + runsOnThisBall
-        wktsInOvers16To20 <- wktsInOvers16To20 + wktsOnThisBall
-      }
-      prev_inningsNum <- inningsNum
-      oversBatted <- overNum + (ballNum / 10)
-      
-      }   # end of an inings within a match
-    # write out data about the innings
-    
-    }     # end of a match
-}         # finished reading the ball by ball detail data 
-" # end of large commented out portion which was reading line by line
+#matDet2008 <- subset(matDet, subset = Season == 2008)
