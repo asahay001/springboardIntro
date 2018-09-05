@@ -67,7 +67,7 @@ matDet <- rbind(matDetNum, matDetChar) %>%
 # This completes the ball by ball data file preparation. Let's write it out for data exploration 
 # writing to current working directory which is defined in the variable filesDir
 
-write.csv (matDet, "wrangled_ballByBallDataIPL.csv")
+#################################write.csv (matDet, "wrangled_ballByBallDataIPL.csv")
 
 # Now cull out only the rows pertaining to end of 6th (end of PowerPlay),10th, 15th and 20th overs to get the match situations (runs, wickets) at that stage
 # Since an innings may end before the scheduled 20 overs (all out before that or crossed opponenet score before that), determine when End of Innings happens
@@ -113,7 +113,61 @@ matDet17Over <- matDet %>% group_by (Team_Batting, Season, Match_id, Innings_No)
   filter (Ball_id == max(Ball_id)) %>% mutate (inningsMarker = 17) %>% # -At the end of over 17  
   select(Team_Batting, Season, Match_id, Innings_No, Over_id, Ball_id, cumRuns, cumWkts, inningsMarker)
 
-# After creating these summaries at end of specific overs to be analyzed, keep only 1 row per match innings
+#### Now determine when some significant milestones happen in an innings: in which over is the 30th run scored,
+#### in which the 50th and then the 75th run scored, and finally the 100th run
+#### And in which over we have 3 wickets down, then 4 wickets out, and then 5 wickets
+
+matDetHighlights <- matDet %>% 
+  select (Team_Batting, Season, Match_id, Innings_No,cumOver:cumWkts) %>%
+  filter (cumRuns > 29 | cumWkts > 2) 
+                        
+matDet30Runs <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
+  filter (cumRuns > 29) %>%
+  mutate (Over30Runs = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Over30Runs) %>%
+  filter(cumOver == min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Over30Runs) %>%
+  distinct(Over30Runs) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+matDet50Runs <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
+  filter (cumRuns > 49) %>%
+  mutate (Over50Runs = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Over50Runs) %>%
+  filter(cumOver == min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Over50Runs) %>%
+  distinct(Over50Runs) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+matDet75Runs <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
+  filter (cumRuns > 74) %>%
+  mutate (Over75Runs = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Over75Runs) %>%
+  filter(cumOver == min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Over75Runs) %>%
+  distinct(Over75Runs) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+matDet100Runs <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
+  filter (cumRuns > 99) %>%
+  mutate (Over100Runs = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Over100Runs) %>%
+  filter(cumOver == min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Over100Runs) %>%
+  distinct(Over100Runs) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+
+matDet3Wkts <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
+  filter (cumWkts > 2) %>%
+  mutate (Over3Wkts = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Over3Wkts) %>%
+  distinct(Over3Wkts) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+matDet4Wkts <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
+  filter (cumWkts > 3) %>%
+  mutate (Over4Wkts = min(cumOver)) %>%
+  group_by(Team_Batting, Season, Match_id, Innings_No, Over4Wkts) %>%
+  distinct(Over4Wkts) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+matDet5Wkts <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
+  filter (cumWkts > 4) %>% 
+  mutate (Over5Wkts = min(cumOver)) %>%
+  group_by(Team_Batting, Season, Match_id, Innings_No, Over5Wkts) %>%
+  distinct(Over5Wkts) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+
+
+# After creating these summaries at end of specific overs/milestones to be analyzed, keep only 1 row per match innings
 # So keep only Over = 1 and Ball = 1 for each match innings, and add those over stats as columns 
 
 matSumm <- matDet %>% filter (Over_id == 1 & Ball_id == 1) %>%
@@ -159,7 +213,29 @@ matSumm <- matDet %>% filter (Over_id == 1 & Ball_id == 1) %>%
   select(TeamNameBat:Innings_No, venueGround:Over20RunRate) %>%
   arrange(TeamNameBat, Season, Match_id, Innings_No)
 
-
+## Add the milestone run columns:
+matSumm <- matSumm %>% left_join(matDet30Runs, 
+                                 by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (TeamNameBat:Over20Wkts, Over30Runs) %>%
+  left_join(matDet50Runs, 
+            by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (TeamNameBat:Over30Runs, Over50Runs) %>%
+  left_join(matDet75Runs, 
+            by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (TeamNameBat:Over50Runs, Over75Runs) %>%
+  left_join(matDet100Runs, 
+            by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (TeamNameBat:Over75Runs, Over100Runs) %>%
+  left_join(matDet3Wkts, 
+            by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (TeamNameBat:Over100Runs, Over3Wkts) %>%
+  left_join(matDet4Wkts, 
+            by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (TeamNameBat:Over3Wkts, Over4Wkts = Over4Wkts.y)  %>%
+  left_join(matDet5Wkts, 
+            by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
+  select (TeamNameBat:Over4Wkts, Over5Wkts) 
+  
 #Finally write the new summary data frame to a csv file so that we can do exploration and then create predictive model
 #writing to current working directory which is defined in the variable filesDir
 write.csv (matSumm, "wrangled_matchSummaryDataIPL.csv")
