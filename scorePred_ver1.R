@@ -42,32 +42,30 @@ matDet <- matDet %>% select (Team_Batting, Season, Match_id = MatcH_id, Innings_
   left_join(matSumm, by = c("Match_id" = "match_id")) %>%
     select(Team_Batting:cumWkts, venueGround = Venue_Name, venueCity = City_Name, winner = match_winner)
 
+# Some of the Team_Batting and Team_bowling in the original csv file (and hence in matDet) are character strings
+# let's convert them to the TeamId joining with Teams 
+matDet <- matDet %>% left_join(teams, by = c("Team_Batting"= "Team_Name")) %>%
+  select(Team_Batting:winner, TeamBatID = Team_Id) %>%
+  left_join(teams, by = c("Team_Bowling"= "Team_Name")) %>%
+  select(Team_Batting:TeamBatID, TeamBowlID = Team_Id)
+matDet$Team_Batting <- as.numeric(ifelse(is.na(matDet$TeamBatID), matDet$Team_Batting, matDet$TeamBatID))
+matDet$Team_Bowling <- as.numeric(ifelse(is.na(matDet$TeamBowlID), matDet$Team_Bowling, matDet$TeamBowlID))
+
 # Now add the batting and bowling team names with the lookup table team; Trouble with data "as is" is that 
 # seasons 2008-2016 has numbers in the batting and bolwing team ids, but for season 2017, the actual team names are stored
 # So do the lookup in 2 steps: first for the nueric ids (they actually are factor data types)
 
-matDetNum <-matDet %>% mutate (newBatTeamId = as.character(Team_Batting), 
-                               newBowlTeamId = as.character(Team_Bowling) ) %>%
-  filter (newBatTeamId < "99") %>% mutate (Team_Id = as.numeric(newBatTeamId)) %>%
-  left_join (teams, by = "Team_Id") %>% 
-  select (TeamNameBat = Team_Name, Team_Batting:Ball_id, cumOver:winner, 
-          Team_Bowling, newBowlTeamId) %>%
-  mutate ( Team_Id = as.numeric(newBowlTeamId)) %>% left_join (teams, by = "Team_Id") %>%
-  select(TeamNameBat:winner, TeamNameBowl = Team_Name, Team_Bowling)
-
-matDetChar <- matDet %>% mutate (newTeamId = as.character (Team_Batting)) %>% filter (newTeamId > "99")
-# IDs are already stored as names for Batting and Bowling teams for this set if rows in the original data file
-matDetChar <- matDetChar %>% mutate (TeamNameBat = Team_Batting, TeamNameBowl = Team_Bowling) %>%
-  select(TeamNameBat, Team_Batting:Ball_id, cumOver:winner, TeamNameBowl, Team_Bowling)
-# Now combine the 2 data.frames back into 1, and then save in each row if TeamNameBat won the match:
-matDet <- rbind(matDetNum, matDetChar) %>%
-  mutate (TeamBattingWon = as.character(TeamNameBat == winner)) %>%
+matDet <- matDet %>% left_join(teams, by = c("Team_Batting"= "Team_Id")) %>%
+  select (TeamNameBat = Team_Name, Team_Batting:winner) %>%
+  left_join(teams, by = c("Team_Bowling"= "Team_Id")) %>%
+  select (TeamNameBat:winner, TeamNameBowl = Team_Name, Team_Bowling) %>%
+  mutate (TeamBattingWon = as.character(TeamNameBat) == as.character(winner)) %>%
   arrange(TeamNameBat, Season, Match_id, Innings_No, Over_id, Ball_id)
 
 # This completes the ball by ball data file preparation. Let's write it out for data exploration 
 # writing to current working directory which is defined in the variable filesDir
 
-#################################write.csv (matDet, "wrangled_ballByBallDataIPL.csv")
+write.csv (matDet, "wrangled_ballByBallDataIPL.csv")
 
 # Now cull out only the rows pertaining to end of 6th (end of PowerPlay),10th, 15th and 20th overs to get the match situations (runs, wickets) at that stage
 # Since an innings may end before the scheduled 20 overs (all out before that or crossed opponenet score before that), determine when End of Innings happens
@@ -123,48 +121,48 @@ matDetHighlights <- matDet %>%
                         
 matDet30Runs <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
   filter (cumRuns > 29) %>%
-  mutate (Over30Runs = min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, Over30Runs) %>%
+  mutate (Runs30InOver = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Runs30InOver) %>%
   filter(cumOver == min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Over30Runs) %>%
-  distinct(Over30Runs) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Runs30InOver) %>%
+  distinct(Runs30InOver) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
 matDet50Runs <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
   filter (cumRuns > 49) %>%
-  mutate (Over50Runs = min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, Over50Runs) %>%
+  mutate (Runs50InOver = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Runs50InOver) %>%
   filter(cumOver == min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Over50Runs) %>%
-  distinct(Over50Runs) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Runs50InOver) %>%
+  distinct(Runs50InOver) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
 matDet75Runs <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
   filter (cumRuns > 74) %>%
-  mutate (Over75Runs = min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, Over75Runs) %>%
+  mutate (Runs75InOver = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Runs75InOver) %>%
   filter(cumOver == min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Over75Runs) %>%
-  distinct(Over75Runs) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Runs75InOver) %>%
+  distinct(Runs75InOver) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
 matDet100Runs <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
   filter (cumRuns > 99) %>%
-  mutate (Over100Runs = min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, Over100Runs) %>%
+  mutate (Runs100InOver = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Runs100InOver) %>%
   filter(cumOver == min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Over100Runs) %>%
-  distinct(Over100Runs) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+  group_by(Team_Batting, Season, Match_id, Innings_No, cumOver, Runs100InOver) %>%
+  distinct(Runs100InOver) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
 
 matDet3Wkts <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
   filter (cumWkts > 2) %>%
-  mutate (Over3Wkts = min(cumOver)) %>% 
-  group_by(Team_Batting, Season, Match_id, Innings_No, Over3Wkts) %>%
-  distinct(Over3Wkts) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+  mutate (Wkts3InOver = min(cumOver)) %>% 
+  group_by(Team_Batting, Season, Match_id, Innings_No, Wkts3InOver) %>%
+  distinct(Wkts3InOver) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
 matDet4Wkts <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
   filter (cumWkts > 3) %>%
-  mutate (Over4Wkts = min(cumOver)) %>%
-  group_by(Team_Batting, Season, Match_id, Innings_No, Over4Wkts) %>%
-  distinct(Over4Wkts) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+  mutate (Wkts4InOver = min(cumOver)) %>%
+  group_by(Team_Batting, Season, Match_id, Innings_No, Wkts4InOver) %>%
+  distinct(Wkts4InOver) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
 matDet5Wkts <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Innings_No) %>%
   filter (cumWkts > 4) %>% 
-  mutate (Over5Wkts = min(cumOver)) %>%
-  group_by(Team_Batting, Season, Match_id, Innings_No, Over5Wkts) %>%
-  distinct(Over5Wkts) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
+  mutate (Wkts5InOver = min(cumOver)) %>%
+  group_by(Team_Batting, Season, Match_id, Innings_No, Wkts5InOver) %>%
+  distinct(Wkts5InOver) # to eliminate extra balls in any over whch get lumped in as over 2.0 or 3.0 or 4.0....
 
 
 # After creating these summaries at end of specific overs/milestones to be analyzed, keep only 1 row per match innings
@@ -210,36 +208,34 @@ matSumm <- matDet %>% filter (Over_id == 1 & Ball_id == 1) %>%
   select (TeamNameBat:Over17RunRate, 
           Over20 = Over_id, Over20Ball = Ball_id, Over20Runs = cumRuns, Over20Wkts = cumWkts) %>%
   mutate (Over20RunRate = round(Over20Runs / 20, 2)) %>%
-  select(TeamNameBat:Innings_No, venueGround:Over20RunRate) %>%
+  select(TeamNameBat:Innings_No, Team_Bowling, venueGround:Over20RunRate) %>%
   arrange(TeamNameBat, Season, Match_id, Innings_No)
 
 ## Add the milestone run columns:
 matSumm <- matSumm %>% left_join(matDet30Runs, 
                                  by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
-  select (TeamNameBat:Over20Wkts, Over30Runs) %>%
+  select (TeamNameBat:Over20Wkts, Runs30InOver) %>%
   left_join(matDet50Runs, 
             by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
-  select (TeamNameBat:Over30Runs, Over50Runs) %>%
+  select (TeamNameBat:Runs30InOver, Runs50InOver) %>%
   left_join(matDet75Runs, 
             by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
-  select (TeamNameBat:Over50Runs, Over75Runs) %>%
+  select (TeamNameBat:Runs50InOver, Runs75InOver) %>%
   left_join(matDet100Runs, 
             by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
-  select (TeamNameBat:Over75Runs, Over100Runs) %>%
+  select (TeamNameBat:Runs75InOver, Runs100InOver) %>%
   left_join(matDet3Wkts, 
             by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
-  select (TeamNameBat:Over100Runs, Over3Wkts) %>%
+  select (TeamNameBat:Runs100InOver, Wkts3InOver) %>%
   left_join(matDet4Wkts, 
             by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
-  select (TeamNameBat:Over3Wkts, Over4Wkts = Over4Wkts.y)  %>%
+  select (TeamNameBat:Wkts3InOver, Wkts4InOver)  %>%
   left_join(matDet5Wkts, 
             by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
-  select (TeamNameBat:Over4Wkts, Over5Wkts) 
+  select (TeamNameBat:Wkts4InOver, Wkts5InOver) %>%
+  mutate (interactionCurrTeams = Team_Batting - mean(Team_Batting) * Team_Bowling - mean(Team_Bowling)) 
   
 #Finally write the new summary data frame to a csv file so that we can do exploration and then create predictive model
 #writing to current working directory which is defined in the variable filesDir
 write.csv (matSumm, "wrangled_matchSummaryDataIPL.csv")
 
-
-# build new data frame for analysis from sorted data files for 2008
-#matDet2008 <- subset(matDet, subset = Season == 2008)
