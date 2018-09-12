@@ -211,6 +211,11 @@ matSumm <- matDet %>% filter (Over_id == 1 & Ball_id == 1) %>%
   select(TeamNameBat:Innings_No, Team_Bowling, venueGround:Over20RunRate) %>%
   arrange(TeamNameBat, Season, Match_id, Innings_No)
 
+## Compute a couple of mean values for interaction columns later on:
+mean_Team_Batting <- mean(matSumm$Team_Batting)
+mean_Team_Bowling <- mean(matSumm$Team_Bowling)
+mean_venueCity <- mean(as.numeric(matSumm$venueCity))
+
 ## Add the milestone run columns:
 matSumm <- matSumm %>% left_join(matDet30Runs, 
                                  by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
@@ -233,7 +238,12 @@ matSumm <- matSumm %>% left_join(matDet30Runs,
   left_join(matDet5Wkts, 
             by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
   select (TeamNameBat:Wkts4InOver, Wkts5InOver) %>%
-  mutate (interactionCurrTeams = Team_Batting - mean(Team_Batting) * Team_Bowling - mean(Team_Bowling)) 
+  ## Now add a couple of interaction columns for the prediction modeling later on:
+  # a) How does one team score against its opponent (interaction betweene the opponenets in a match)
+  # b) How does scoring for a team get impacted at different venues: interaction between batting team and venue
+  mutate (interactionCurrTeams = (Team_Batting - mean_Team_Batting) * (Team_Bowling - mean_Team_Bowling),
+          interactionVenueBatTeam = ((Team_Batting - mean_Team_Batting) * 
+                                       (as.numeric(venueCity) - mean_venueCity)))
   
 #Finally write the new summary data frame to a csv file so that we can do exploration and then create predictive model
 #writing to current working directory which is defined in the variable filesDir
