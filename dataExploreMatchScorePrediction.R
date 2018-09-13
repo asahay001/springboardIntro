@@ -151,11 +151,92 @@ ggplot(data = matSumm_csk) +
   facet_wrap(~ (group = cut_width(Over4Runs, 5)), nrow = 3)
 # the above plot seems to suggest that the initial run rate in the 1st 6 overs is less of a factor for the final score
 
-# The above exploration should next be repeated for each opponent of CSK to explore what variables may 
-# predict its final score against the particular opponent
-
-#dev.copy(pdf, "plots.pdf")
 dev.off()
 
+# The above exploration should next be repeated for each opponent of CSK to explore what variables may 
+# predict its final score against the particular opponent, say KKR:
+matSumm_cskKKR <- filter(matSumm_csk, TeamNameBowl == "Kolkata Knight Riders")
+matDet_cskKKR <- filter(matDet_csk, TeamNameBowl == "Kolkata Knight Riders")
 
-  
+# explore the ipact of ball-by-ball run scorin at different venues and in different innings:
+ggplot(data = matDet_cskKKR, mapping = aes( x = cumRuns, y = cumOver)) +
+  geom_smooth(
+    mapping = aes(linetype = as.factor(Innings_No), color = venueCity),
+    method = "lm", se = FALSE)
+
+ggplot(data = matSumm_cskKKR, mapping = aes( y = EOIRuns, x = Over6Wkts)) +
+  geom_smooth(
+    mapping = aes(linetype =  venueCity),
+    method = "lm", se = FALSE)
+
+
+# Start data modeling 
+# First have a smaller file for one team: try Rajasthan Royals and CSk as the teams, one by one
+#matDet_csk <- filter (matDet, TeamNameBat == "Rajasthan Royals" & Season < 2015)
+#matSumm_csk <- filter (matSumm, TeamNameBat == "Rajasthan Royals" & Season < 2015)
+
+matDet_csk <- filter (matDet, TeamNameBat == "Chennai Super Kings" & Season < 2015)
+matSumm_csk <- filter (matSumm, TeamNameBat == "Chennai Super Kings" & Season < 2015)
+
+
+cskEOIModel = lm(EOIRuns ~ venueCity, data = matSumm_csk)
+summary (cskEOIModel)
+# Above shows poor corelation between EOIRuns and VenueCity
+
+#Obviously there is a strong positive corelation betwen EOIRuns and EOIRunRate as shown below:
+
+plot(matSumm_csk$EOIRunRate, matSumm_csk$EOIRuns)
+cskEOIModel = lm(EOIRuns ~ EOIRunRate, data = matSumm_csk)
+summary (cskEOIModel)
+
+#But let's explore relationships between EOIRuns and runs/wickets at the end of certain overs:
+plot(matSumm_csk$Over6Runs, matSumm_csk$EOIRuns )
+cskEOIModel = lm(EOIRuns ~ Over6Runs, data = matSumm_csk)
+summary (cskEOIModel)
+
+plot(matSumm_csk$Over10Wkts, matSumm_csk$EOIRuns )
+cskEOIModel = lm(EOIRuns ~ Over10Wkts, data = matSumm_csk)
+summary (cskEOIModel)
+
+# Above shows no corelation in these single independent variables either with the dependent variable EOIRuns
+
+
+#Now try 2 independent variables in the model: Runs and Wickets at various points in an innings, esp early on
+# like end of the powerplay (6 overs): runs scored and wickeets lost: 
+cskEOIModel = lm (EOIRuns ~ Over12Runs + Over6Wkts, data = matSumm_csk)
+summary(cskEOIModel)
+# The above just shows that number of wickets lost is not a significant independent variable; only Runs scored
+
+
+cskEOIModel = lm (EOIRuns ~ Over6Runs + Over10Wkts + TeamNameBowl + venueCity, data = matSumm_csk)
+summary(cskEOIModel)
+# R2 value is still quite low for these combinations (0.3 to 0.44 for 4 and 6 over runs; wickets lost continue to not be significant
+
+cskEOIModel = lm (EOIRuns ~ Over4Runs + Over6Runs + Over8Runs +TeamNameBowl + venueCity, data = matSumm_csk)
+summary(cskEOIModel)
+#No significant improvement even after adding over6Runs and over8Runs!! 
+
+
+# So now try in which overs milestone runs came:30th rin, 50 runs...75 runs...100 runs.....
+cskEOIModel = lm (EOIRuns ~ Runs100InOver, data = matSumm_csk)
+summary(cskEOIModel)
+#Not till the 75th run, does R2 raches 0.46; at 100th run, it improves marginally to 0.52 Not good enough!
+
+#Next try the milestone wickets falling:
+cskEOIModel = lm (EOIRuns ~ Wkts5InOver, data = matSumm_csk)
+summary(cskEOIModel)
+# Even with the 5th wicket down, R2 gets up to only 0.34. Wickets again have even less of a correlation
+
+# Try a combination of these milestone: runs + wickets:
+cskEOIModel = lm (EOIRuns ~ Runs100InOver + Wkts4InOver, data = matSumm_csk)
+summary(cskEOIModel)
+#Even 50 runs and 5 wickets gives an R2 of only 0.47!! 50 runs and 2 or 3 wickets have the same R2 of 0.40
+# 100 runs and 4 wickets takes up to 0.61. Number of wickets lost is not significant!!
+
+cskEOIModel = lm (EOIRuns ~ Runs30InOver + Over10Runs, data = matSumm_csk)
+summary(cskEOIModel)
+#Only 0.46 R2 for the above for RR, and only 0.42 for CSk!
+
+# cor(matSumm_csk)
+
+
