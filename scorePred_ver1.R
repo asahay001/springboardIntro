@@ -18,8 +18,8 @@ setwd(filesDir)
 teams <- read.csv(file= 'Team.csv', header = TRUE, sep = ",")
 
 # Read Match.csv which has summary of each match played: opponents, venue, runs scored by each team, match result
-matSumm <- read.csv(file= 'Match.csv', header = TRUE, sep = ",")
-matSumm <- matSumm[order(matSumm$match_id),]
+innSumm <- read.csv(file= 'Match.csv', header = TRUE, sep = ",")
+innSumm <- innSumm[order(innSumm$match_id),]
 
 # Finally read the details of each match from Ball_By_Ball.csv
 matDetFile <- "Ball_By_Ball.csv"
@@ -39,7 +39,7 @@ matDet <- matDet %>% select (Team_Batting, Season, Match_id = MatcH_id, Innings_
           cumWkts = cumsum(Bowler_Wicket + Run_out)) %>%
   select (-c(Runs_Scored, Extra_runs, Bowler_Wicket, Run_out)) %>% # Discard columns not needed anymore since cumRuns and cumWkts are built
   filter (Innings_No < 3) %>%   # Only interested in full innings 1 and 2; not super over innings to break tie
-  left_join(matSumm, by = c("Match_id" = "match_id")) %>%
+  left_join(innSumm, by = c("Match_id" = "match_id")) %>%
     select(Team_Batting:cumWkts, venueGround = Venue_Name, venueCity = City_Name, winner = match_winner)
 
 # Some of the Team_Batting and Team_bowling in the original csv file (and hence in matDet) are character strings
@@ -168,7 +168,7 @@ matDet5Wkts <- matDetHighlights %>% group_by(Team_Batting, Season, Match_id, Inn
 # After creating these summaries at end of specific overs/milestones to be analyzed, keep only 1 row per match innings
 # So keep only Over = 1 and Ball = 1 for each match innings, and add those over stats as columns 
 
-matSumm <- matDet %>% filter (Over_id == 1 & Ball_id == 1) %>%
+innSumm <- matDet %>% filter (Over_id == 1 & Ball_id == 1) %>%
   left_join(matDetEOI, by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
   select (TeamNameBat:TeamBattingWon,  
           EOIOver = Over_id.y, EOIBall = Ball_id.y, EOIRuns = cumRuns.y, EOIWkts = cumWkts.y) %>% 
@@ -212,12 +212,12 @@ matSumm <- matDet %>% filter (Over_id == 1 & Ball_id == 1) %>%
   arrange(TeamNameBat, Season, Match_id, Innings_No)
 
 ## Compute a couple of mean values for interaction columns later on:
-mean_Team_Batting <- mean(matSumm$Team_Batting)
-mean_Team_Bowling <- mean(matSumm$Team_Bowling)
-mean_venueCity <- mean(as.numeric(matSumm$venueCity))
+mean_Team_Batting <- mean(innSumm$Team_Batting)
+mean_Team_Bowling <- mean(innSumm$Team_Bowling)
+mean_venueCity <- mean(as.numeric(innSumm$venueCity))
 
 ## Add the milestone run columns:
-matSumm <- matSumm %>% left_join(matDet30Runs, 
+innSumm <- innSumm %>% left_join(matDet30Runs, 
                                  by = c("Team_Batting", "Season", "Match_id", "Innings_No")) %>%
   select (TeamNameBat:Over20Wkts, Runs30InOver) %>%
   left_join(matDet50Runs, 
@@ -247,5 +247,5 @@ matSumm <- matSumm %>% left_join(matDet30Runs,
   
 #Finally write the new summary data frame to a csv file so that we can do exploration and then create predictive model
 #writing to current working directory which is defined in the variable filesDir
-write.csv (matSumm, "wrangled_matchSummaryDataIPL.csv")
+write.csv (innSumm, "wrangled_inningsSummaryDataIPL.csv")
 
