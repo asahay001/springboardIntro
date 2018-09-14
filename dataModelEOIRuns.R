@@ -82,10 +82,50 @@ pred_EOIRuns <- as.numeric(predictEOIRuns2015)
 act_EOIRuns <-matSummTest2015$EOIRuns
 match_seq <- seq(1,109,1)
 diff_predActEOIRuns <- round(pred_EOIRuns - act_EOIRuns, digits = 0)
-predictedScore <- data.frame(pred_EOIRuns, act_EOIRuns, match_seq, diff_predActEOIRuns)
-ggplot(data = predictedScore, aes (x = match_seq, y = diff_predActEOIRuns )) +
+predictedScore2015 <- data.frame(pred_EOIRuns, act_EOIRuns, match_seq, diff_predActEOIRuns)
+
+sum(diff_predActEOIRuns, na.rm = TRUE)  # Running this command shows a total value of -570 runs across 109 innings.
+sum (act_EOIRuns)  # This comes out to be 17,597 runs. (570/17597 = 3.23%)
+ggplot(data = predictedScore2015, aes (x = match_seq, y = diff_predActEOIRuns )) +
         geom_point (na.rm = TRUE) +
          geom_smooth (method = "lm", se=FALSE, na.rm = TRUE)
+
+#Now test the model against 2016 season data:
+matSummTest2016 <- filter(matSumm, Season == 2016)
+
+predictEOIRuns2016 = predict (runsEOIModel4, newdata = matSummTest2016)
+
+# check the prediction: 
+pred_EOIRuns <- as.numeric(predictEOIRuns2016)
+act_EOIRuns <-matSummTest2016$EOIRuns
+match_seq <- seq(1,117,1)  # There are 117 innings in 2016
+diff_predActEOIRuns <- round(pred_EOIRuns - act_EOIRuns, digits = 0)
+predictedScore2016 <- data.frame(pred_EOIRuns, act_EOIRuns, match_seq, diff_predActEOIRuns)
+
+sum(diff_predActEOIRuns, na.rm = TRUE)  # This ocmes out to be -87 runs total across 117 innings
+sum (act_EOIRuns)  # This comes out to be 18,622 runs. (87/18622 = 0.46%)
+ggplot(data = predictedScore2016, aes (x = match_seq, y = diff_predActEOIRuns )) +
+  geom_point (na.rm = TRUE) +
+  geom_smooth (method = "lm", se=FALSE, na.rm = TRUE)  
+
+#Now test the model against 2017 season data:
+matSummTest2017 <- filter(matSumm, Season == 2017)
+
+predictEOIRuns2017 = predict (runsEOIModel4, newdata = matSummTest2017)
+
+# check the prediction: 
+pred_EOIRuns <- as.numeric(predictEOIRuns2017)
+act_EOIRuns <-matSummTest2017$EOIRuns
+match_seq <- seq(1,115,1)  # There are 115 innings in 2016
+diff_predActEOIRuns <- round(pred_EOIRuns - act_EOIRuns, digits = 0)
+predictedScore2017 <- data.frame(pred_EOIRuns, act_EOIRuns, match_seq, diff_predActEOIRuns)
+
+sum(diff_predActEOIRuns, na.rm = TRUE)  # This ocmes out to be 151 runs total across 117 innings
+sum (act_EOIRuns)  # This comes out to be 18,604 runs. (151/18604 = 0.81%)
+ggplot(data = predictedScore2017, aes (x = match_seq, y = diff_predActEOIRuns )) +
+  geom_point (na.rm = TRUE) +
+  geom_smooth (method = "lm", se=FALSE, na.rm = TRUE) 
+
 
 # Now work with 1 team's batting prformance and create a model and then test it: CSK
 # Abbreviating in my comments throughout: Chennai Super Kings = CSK 
