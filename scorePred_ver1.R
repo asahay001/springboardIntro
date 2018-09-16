@@ -249,3 +249,132 @@ innSumm <- innSumm %>% left_join(matDet30Runs,
 #writing to current working directory which is defined in the variable filesDir
 write.csv (innSumm, "wrangled_inningsSummaryDataIPL.csv")
 
+## Now build dataset with each match as a data row so that we can predict EOI scores in each match at
+## for the team batting 1st at the end of 5th, 10th and 15th overs (with increasing accuracy)
+## and predict the macth winner starting in the 2nd team's batting innings at the end of
+## the 5th, 10th and 15th overs (so for the match 20+5, 20 + 10, and 20 + 15 overs, assuming
+## the team batting 1st bats all of its 20 overs)
+## So we will get runs and wickets data in each row for each over: 1 through 15 which will
+## be used in creating the prediction model for EOI score and match winner
+
+##  mutate (!!(sym(paste("Over", as.character(cumOver), "Runs", sep =""))) := cumRuns)
+
+matDetOverStats <- matDet %>% select (Season:cumWkts) %>%
+  group_by(Season, Match_id, Innings_No, Over_id) %>%
+  filter (Over_id %in% seq(1, to = 20, by =1 ) & Ball_id == max(Ball_id, na.rm = TRUE)) %>%
+  ungroup() %>%  # ungrouping is necessary because Over_id as part of the group_by cannot be updated
+  mutate (Over_id = ifelse (Innings_No == 2, Over_id + 20, Over_id)) %>% # 2nd Innings starts with the 21st over of the match
+  mutate (cumOverRuns = paste ("Over", as.character(Over_id), "Runs", sep = ""),
+          cumOverWkts = paste ("Over", as.character(Over_id), "Wkts", sep = ""),
+          cumOverRR = paste ("Over", as.character(Over_id), "RR", sep = ""))
+          ##    !!(varOverRuns) := ifelse (cumOver == 2 & Innings_No ==1, cumRuns, 0))
+          
+matDetOverStats <- spread(matDetOverStats, cumOverRuns, cumRuns)
+matDetOverStats <- spread(matDetOverStats, cumOverWkts, cumWkts)
+matDetOverStats <- spread(matDetOverStats, cumOverRR, runRate)
+#matDetOverStats[is.na(matDetOverStats)] <- 0  # NA values can be safely replaced with 0 in this dataset for further computation
+
+matDetOverStats <- matDetOverStats %>% select ( -cumOver, -Ball_id, -Team_Bowling) %>%
+  group_by(Season, Match_id) %>%
+  mutate (Over1Runs = max(Over1Runs,na.rm=TRUE), Over1Wkts = max(Over1Wkts,na.rm=TRUE), Over1RR = max(Over1RR,na.rm=TRUE),
+          Over2Runs = max(Over2Runs,na.rm=TRUE), Over2Wkts = max(Over2Wkts,na.rm=TRUE), Over2RR = max(Over2RR,na.rm=TRUE),
+          Over3Runs = max(Over3Runs,na.rm=TRUE), Over3Wkts = max(Over3Wkts,na.rm=TRUE), Over3RR = max(Over3RR,na.rm=TRUE),
+          Over4Runs = max(Over4Runs,na.rm=TRUE), Over4Wkts = max(Over4Wkts,na.rm=TRUE), Over4RR = max(Over4RR,na.rm=TRUE),
+          Over5Runs = max(Over5Runs,na.rm=TRUE), Over5Wkts = max(Over5Wkts,na.rm=TRUE), Over5RR = max(Over5RR,na.rm=TRUE),
+          Over6Runs = max(Over6Runs,na.rm=TRUE), Over6Wkts = max(Over6Wkts,na.rm=TRUE), Over6RR = max(Over6RR,na.rm=TRUE),
+          Over7Runs = max(Over7Runs,na.rm=TRUE), Over7Wkts = max(Over7Wkts,na.rm=TRUE), Over7RR = max(Over7RR,na.rm=TRUE),
+          Over8Runs = max(Over8Runs,na.rm=TRUE), Over8Wkts = max(Over8Wkts,na.rm=TRUE), Over8RR = max(Over8RR,na.rm=TRUE),
+          Over9Runs = max(Over9Runs,na.rm=TRUE), Over9Wkts = max(Over9Wkts,na.rm=TRUE), Over9RR = max(Over9RR,na.rm=TRUE),
+          Over10Runs = max(Over10Runs,na.rm=TRUE), Over10Wkts = max(Over10Wkts,na.rm=TRUE), Over10RR = max(Over10RR,na.rm=TRUE),
+          Over11Runs = max(Over11Runs,na.rm=TRUE), Over11Wkts = max(Over11Wkts,na.rm=TRUE), Over11RR = max(Over11RR,na.rm=TRUE),
+          Over12Runs = max(Over12Runs,na.rm=TRUE), Over12Wkts = max(Over12Wkts,na.rm=TRUE), Over12RR = max(Over12RR,na.rm=TRUE),
+          Over13Runs = max(Over13Runs,na.rm=TRUE), Over13Wkts = max(Over13Wkts,na.rm=TRUE), Over13RR = max(Over13RR,na.rm=TRUE),
+          Over14Runs = max(Over14Runs,na.rm=TRUE), Over14Wkts = max(Over14Wkts,na.rm=TRUE), Over14RR = max(Over14RR,na.rm=TRUE),
+          Over15Runs = max(Over15Runs,na.rm=TRUE), Over15Wkts = max(Over15Wkts,na.rm=TRUE), Over15RR = max(Over15RR,na.rm=TRUE),
+          Over16Runs = max(Over16Runs,na.rm=TRUE), Over16Wkts = max(Over16Wkts,na.rm=TRUE), Over16RR = max(Over16RR,na.rm=TRUE),
+          Over17Runs = max(Over17Runs,na.rm=TRUE), Over17Wkts = max(Over17Wkts,na.rm=TRUE), Over17RR = max(Over17RR,na.rm=TRUE),
+          Over18Runs = max(Over18Runs,na.rm=TRUE), Over18Wkts = max(Over18Wkts,na.rm=TRUE), Over18RR = max(Over18RR,na.rm=TRUE),
+          Over19Runs = max(Over19Runs,na.rm=TRUE), Over19Wkts = max(Over19Wkts,na.rm=TRUE), Over19RR = max(Over19RR,na.rm=TRUE),
+          Over20Runs = max(Over20Runs,na.rm=TRUE), Over20Wkts = max(Over20Wkts,na.rm=TRUE), Over20RR = max(Over20RR,na.rm=TRUE),
+          Over21Runs = max(Over21Runs,na.rm=TRUE), Over21Wkts = max(Over21Wkts,na.rm=TRUE), Over21RR = max(Over21RR,na.rm=TRUE),
+          Over22Runs = max(Over22Runs,na.rm=TRUE), Over22Wkts = max(Over22Wkts,na.rm=TRUE), Over22RR = max(Over22RR,na.rm=TRUE),
+          Over23Runs = max(Over23Runs,na.rm=TRUE), Over23Wkts = max(Over23Wkts,na.rm=TRUE), Over23RR = max(Over23RR,na.rm=TRUE),
+          Over24Runs = max(Over24Runs,na.rm=TRUE), Over24Wkts = max(Over24Wkts,na.rm=TRUE), Over24RR = max(Over24RR,na.rm=TRUE),
+          Over25Runs = max(Over25Runs,na.rm=TRUE), Over25Wkts = max(Over25Wkts,na.rm=TRUE), Over25RR = max(Over25RR,na.rm=TRUE),
+          Over26Runs = max(Over26Runs,na.rm=TRUE), Over26Wkts = max(Over26Wkts,na.rm=TRUE), Over26RR = max(Over26RR,na.rm=TRUE),
+          Over27Runs = max(Over27Runs,na.rm=TRUE), Over27Wkts = max(Over27Wkts,na.rm=TRUE), Over27RR = max(Over27RR,na.rm=TRUE),
+          Over28Runs = max(Over28Runs,na.rm=TRUE), Over28Wkts = max(Over28Wkts,na.rm=TRUE), Over28RR = max(Over28RR,na.rm=TRUE),
+          Over29Runs = max(Over29Runs,na.rm=TRUE), Over29Wkts = max(Over29Wkts,na.rm=TRUE), Over29RR = max(Over29RR,na.rm=TRUE),
+          Over30Runs = max(Over30Runs,na.rm=TRUE), Over30Wkts = max(Over30Wkts,na.rm=TRUE), Over30RR = max(Over30RR,na.rm=TRUE),
+          Over31Runs = max(Over31Runs,na.rm=TRUE), Over31Wkts = max(Over31Wkts,na.rm=TRUE), Over31RR = max(Over31RR,na.rm=TRUE),
+          Over32Runs = max(Over32Runs,na.rm=TRUE), Over32Wkts = max(Over32Wkts,na.rm=TRUE), Over32RR = max(Over32RR,na.rm=TRUE),
+          Over33Runs = max(Over33Runs,na.rm=TRUE), Over33Wkts = max(Over33Wkts,na.rm=TRUE), Over33RR = max(Over33RR,na.rm=TRUE),
+          Over34Runs = max(Over34Runs,na.rm=TRUE), Over34Wkts = max(Over34Wkts,na.rm=TRUE), Over34RR = max(Over34RR,na.rm=TRUE),
+          Over35Runs = max(Over35Runs,na.rm=TRUE), Over35Wkts = max(Over35Wkts,na.rm=TRUE), Over35RR = max(Over35RR,na.rm=TRUE),
+          Over36Runs = max(Over36Runs,na.rm=TRUE), Over36Wkts = max(Over36Wkts,na.rm=TRUE), Over36RR = max(Over36RR,na.rm=TRUE),
+          Over37Runs = max(Over37Runs,na.rm=TRUE), Over37Wkts = max(Over37Wkts,na.rm=TRUE), Over37RR = max(Over37RR,na.rm=TRUE),
+          Over38Runs = max(Over38Runs,na.rm=TRUE), Over38Wkts = max(Over38Wkts,na.rm=TRUE), Over38RR = max(Over38RR,na.rm=TRUE),
+          Over39Runs = max(Over39Runs,na.rm=TRUE), Over39Wkts = max(Over39Wkts,na.rm=TRUE), Over39RR = max(Over39RR,na.rm=TRUE),
+          Over40Runs = max(Over40Runs,na.rm=TRUE), Over40Wkts = max(Over40Wkts,na.rm=TRUE), Over40RR = max(Over40RR,na.rm=TRUE)
+          ) %>%  ## filter to keep only 1 row per match innings, since all the important row info is now in columns
+  group_by(Season, Match_id, Innings_No) %>%
+  filter (Over_id == min(Over_id)) %>%
+  left_join(innSumm, by = c("Season", "Match_id", "Innings_No")) %>% 
+  mutate (EOIInnOvers = paste ("Inn", as.character(Innings_No), "EOIOvers", sep = ""),
+          EOIInnRuns = paste ("Inn", as.character(Innings_No), "EOIRuns", sep = ""),
+          EOIInnWkts = paste ("Inn", as.character(Innings_No), "EOIWkts", sep = ""),
+          EOIInnRR = paste ("Inn", as.character(Innings_No), "EOIRR", sep = "") ) %>%
+  select (Season, Match_id, Innings_No, Over_id, BatFirst = TeamNameBat, BatSecond = TeamNameBowl, winner,
+          TeamBattingFirstWon = TeamBattingWon, venueGround, venueCity, 
+          EOIInnOvers:EOIInnRR, EOIOver:EOIRunRate, 
+          interactionCurrTeams, interactionVenueBatTeam,
+          Over1Runs, Over1Wkts, Over1RR, Over2Runs, Over2Wkts, Over2RR, Over3Runs, Over3Wkts, Over3RR,
+          Over4Runs = Over4Runs.x, Over4Wkts = Over4Wkts.x, Over4RR, 
+          Over5Runs, Over5Wkts, Over5RR,
+          Over6Runs = Over6Runs.x, Over6Wkts = Over6Wkts.x, Over6RR,
+          Over7Runs, Over7Wkts, Over7RR,
+          Over8Runs = Over8Runs.x, Over8Wkts = Over8Wkts.x, Over8RR,
+          Over9Runs, Over9Wkts, Over9RR,
+          Over10Runs = Over10Runs.x, Over10Wkts = Over10Wkts.x, Over10RR,
+          Over11Runs, Over11Wkts, Over11RR,
+          Over12Runs = Over12Runs.x, Over12Wkts = Over12Wkts.x, Over12RR,
+          Over13Runs, Over13Wkts, Over13RR, Over14Runs, Over14Wkts, Over14RR,
+          Over15Runs = Over15Runs.x, Over15Wkts = Over15Wkts.x, Over15RR,
+          Over16Runs, Over16Wkts, Over16RR,
+          Over17Runs = Over17Runs.x, Over17Wkts = Over17Wkts.x, Over17RR,
+          Over18Runs, Over18Wkts, Over18RR, Over19Runs, Over19Wkts, Over19RR,
+          Over20Runs = Over20Runs.x, Over20Wkts = Over20Wkts.x, Over20RR,
+          Over21Runs, Over21Wkts, Over21RR, Over22Runs, Over22Wkts, Over22RR, Over23Runs, Over23Wkts, Over23RR,
+          Over24Runs, Over24Wkts, Over24RR, Over25Runs, Over25Wkts, Over25RR, Over26Runs, Over26Wkts, Over26RR,
+          Over27Runs, Over27Wkts, Over27RR, Over28Runs, Over28Wkts, Over28RR, Over29Runs, Over29Wkts, Over29RR,
+          Over30Runs, Over30Wkts, Over30RR, Over31Runs, Over31Wkts, Over31RR, Over32Runs, Over32Wkts, Over32RR,
+          Over33Runs, Over33Wkts, Over33RR, Over34Runs, Over34Wkts, Over34RR, Over35Runs, Over35Wkts, Over35RR,
+          Over36Runs, Over36Wkts, Over36RR, Over37Runs, Over37Wkts, Over37RR, Over38Runs, Over38Wkts, Over38RR,
+          Over39Runs, Over39Wkts, Over39RR, Over40Runs, Over40Wkts, Over40RR )
+
+matDetOverStats <- spread(matDetOverStats, EOIInnOvers, EOIOver)
+matDetOverStats <- spread(matDetOverStats, EOIInnRuns, EOIRuns)
+matDetOverStats <- spread(matDetOverStats, EOIInnWkts, EOIWkts)
+matDetOverStats <- spread(matDetOverStats, EOIInnRR, EOIRunRate)
+
+matDetOverStats <- matDetOverStats %>% 
+  group_by(Season, Match_id) %>%
+  mutate (Inn1EOIOvers = max(Inn1EOIOvers,na.rm=TRUE), Inn2EOIOvers = max(Inn2EOIOvers, na.rm = TRUE),
+          Inn1EOIRuns = max(Inn1EOIRuns,na.rm=TRUE), Inn2EOIRuns = max(Inn2EOIRuns, na.rm = TRUE), 
+          Inn1EOIWkts = max(Inn1EOIWkts,na.rm=TRUE), Inn2EOIWkts = max(Inn2EOIWkts, na.rm = TRUE),
+          Inn1EOIRR = max(Inn1EOIRR,na.rm=TRUE), Inn2EOIRR = max(Inn2EOIRR, na.rm = TRUE) ) %>%
+  filter(Innings_No == 1) %>%   ## Keep only 1 row per match; each row is now self-contained for a match
+  select(Season, Match_id, BatFirst:venueCity, interactionCurrTeams, interactionVenueBatTeam, 
+         Inn1EOIOvers:Inn2EOIRR, Over1Runs:Over40RR) %>%
+  arrange(Season, Match_id)
+
+#Finally write the new match summary data frame to a csv file so that we can do exploration and then create predictive model
+#writing to current working directory which is defined in the variable filesDir
+write.csv (matDetOverStats, "wrangled_matchSummaryDataIPL.csv")
+
+  
+
+
+
+
+
