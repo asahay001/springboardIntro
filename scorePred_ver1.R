@@ -40,7 +40,8 @@ matDet <- matDet %>% select (Team_Batting, Season, Match_id = MatcH_id, Innings_
   select (-c(Runs_Scored, Extra_runs, Bowler_Wicket, Run_out)) %>% # Discard columns not needed anymore since cumRuns and cumWkts are built
   filter (Innings_No < 3) %>%   # Only interested in full innings 1 and 2; not super over innings to break tie
   left_join(innSumm, by = c("Match_id" = "match_id")) %>%
-    select(Team_Batting:cumWkts, venueGround = Venue_Name, venueCity = City_Name, winner = match_winner)
+    select(Team_Batting:cumWkts, venueGround = Venue_Name, venueCity = City_Name, 
+           toss = Toss_Winner, winner = match_winner)
 
 # Some of the Team_Batting and Team_bowling in the original csv file (and hence in matDet) are character strings
 # let's convert them to the TeamId joining with Teams 
@@ -259,7 +260,7 @@ write.csv (innSumm, "wrangled_inningsSummaryDataIPL.csv")
 
 ##  mutate (!!(sym(paste("Over", as.character(cumOver), "Runs", sep =""))) := cumRuns)
 
-matDetOverStats <- matDet %>% select (Season:cumWkts) %>%
+matDetOverStats <- matDet %>% ungroup %>% select (Season:cumWkts) %>%
   group_by(Season, Match_id, Innings_No, Over_id) %>%
   filter (Over_id %in% seq(1, to = 20, by =1 ) & Ball_id == max(Ball_id, na.rm = TRUE)) %>%
   ungroup() %>%  # ungrouping is necessary because Over_id as part of the group_by cannot be updated
@@ -324,7 +325,7 @@ matDetOverStats <- matDetOverStats %>% select ( -cumOver, -Ball_id, -Team_Bowlin
           EOIInnRuns = paste ("Inn", as.character(Innings_No), "EOIRuns", sep = ""),
           EOIInnWkts = paste ("Inn", as.character(Innings_No), "EOIWkts", sep = ""),
           EOIInnRR = paste ("Inn", as.character(Innings_No), "EOIRR", sep = "") ) %>%
-  select (Season, Match_id, Innings_No, Over_id, BatFirst = TeamNameBat, BatSecond = TeamNameBowl, winner,
+  select (Season, Match_id, Innings_No, Over_id, BatFirst = TeamNameBat, BatSecond = TeamNameBowl, toss, winner,
           TeamBattingFirstWon = TeamBattingWon, venueGround, venueCity, 
           EOIInnOvers:EOIInnRR, EOIOver:EOIRunRate, 
           interactionCurrTeams, interactionVenueBatTeam,
@@ -365,7 +366,8 @@ matDetOverStats <- matDetOverStats %>%
           Inn1EOIRR = max(Inn1EOIRR,na.rm=TRUE), Inn2EOIRR = max(Inn2EOIRR, na.rm = TRUE) ) %>%
   filter(Innings_No == 1) %>%   ## Keep only 1 row per match; each row is now self-contained for a match
   select(Season, Match_id, BatFirst:venueCity, interactionCurrTeams, interactionVenueBatTeam, 
-         Inn1EOIOvers:Inn2EOIRR, Over1Runs:Over40RR) %>%
+         Inn1EOIOvers, Inn1EOIRuns, Inn1EOIWkts, Inn1EOIRR, Inn2EOIOvers, Inn2EOIRuns, Inn2EOIWkts, Inn2EOIRR,
+         Over1Runs:Over40RR) %>%
   arrange(Season, Match_id)
 
 #Finally write the new match summary data frame to a csv file so that we can do exploration and then create predictive model
