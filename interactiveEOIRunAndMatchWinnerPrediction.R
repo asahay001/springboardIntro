@@ -59,7 +59,13 @@ for (row in 1:nrow(matSummTestSeason)) { # Process 1 match at a time after initi
     Over15RunsErr <- Over15EOIRunsPred[1] - matSummTestMatch$Inn1EOIRuns
     Over15PerErr <- (Over15RunsErr/matSummTestMatch$Inn1EOIRuns) * 100 # Percentage error w.r.t. actual EOI
     print (Over10PerErr[1])
-  }  # end of 15th over processing
+  }  # end of 15th over processing; 1st innings processing done. Moving on to 2nd innings with Over 21 onwards
+  Over26EOIRunsPred = predict (runsInn1EOIAtOver26Model, newdata = matSummTestMatch)
+  Over26RunsErr <- Over26EOIRunsPred[1] - matSummTestMatch$Inn2EOIRuns
+  Over26PerErr <- (Over26RunsErr/matSummTestMatch$Inn2EOIRuns) * 100 # Percentage error w.r.t. actual EOI
+  # And now get the winner prediction based on EOI scores for the 2 innings
+  
+  
 } # finished procesing all matches of a season
 
 
