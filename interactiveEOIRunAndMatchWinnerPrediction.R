@@ -148,7 +148,6 @@ for (row in 1:nrow(matSummTestSeason)) { # Process 1 match at a time after initi
                             correctmatchWinnerPredictedModelOver35, correctmatchWinnerPredictedEOIRunsOver35
                             ) 
  } else { # add row to the existing data frame
-   print (row)
     newrow_df <- data.frame (matSummTestMatch$Season, matchID, matSummTestMatch$Inn1EOIRuns, 
                              Over6EOIRunsPred[1], Over6RunsErr, Over6PerErr, 
                              Over10EOIRunsPred[1], Over10RunsErr, Over10PerErr,
@@ -161,8 +160,8 @@ for (row in 1:nrow(matSummTestSeason)) { # Process 1 match at a time after initi
                              Over35EOIRunsPred[1], Over35RunsErr, Over35PerErr, 
                              correctmatchWinnerPredictedModelOver35, correctmatchWinnerPredictedEOIRunsOver35
                               ) 
-    rbind(predRes_df, newrow_df)
-    print ("post rbind")
+    predRes_df <- rbind(predRes_df, newrow_df)
+    #print(newrow_df$matchID)
    }
   
 } # finished procesing all matches of a season
