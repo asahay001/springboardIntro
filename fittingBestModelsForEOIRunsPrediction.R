@@ -222,6 +222,7 @@ Over26modeling_fun <- function() {
                                 data = matSummTrng)
   summary (runsInn1EOIAtOver26Model1)
   AIC(runsInn1EOIAtOver26Model1)
+  #final <- step(runsInn1EOIAtOver26Model1)
   # R2 = 0.62, AIC = 3909
   
   # Shows significant coeff as Inn1EOIRuns, TeamBattingFirstWon, Over26Runs, Over26Wkts, 
