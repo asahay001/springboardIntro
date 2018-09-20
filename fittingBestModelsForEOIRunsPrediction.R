@@ -30,10 +30,8 @@ maxSeason <- 2014
 
 createMatchDataSlice_fun <- function (dataFrame = matSummDet, minSeason, maxSeason, matchId = NULL) {
   if (is.null(matchId)) {
-    x< 2
     matSumm_df <- filter(dataFrame, between (Season,  minSeason, maxSeason))  # Slice of data for best fit model
   } else {
-        y <- 2
         matSumm_df <- filter(dataFrame, between (Season,  minSeason, maxSeason) & Match_id == matchId)
     }
   return (matSumm_df)
