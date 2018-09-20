@@ -30,10 +30,17 @@ matSummTestSeason <- createMatchDataSlice_fun(minSeason = TestSeasonSlice, maxSe
 
 # So let's start the EOI runs prediction at the end of 6th over (then 10th and finally 15th overs for Innings 1)
 
-# First call functins to get the best fit models at the end of various overs:
+# First call functions to get the best fit models at the end of various overs, and also winner predictors:
 runsInn1EOIAtOver6Model <- Over6modeling_fun()   # end of 6th over model to predict EOI Runs
 runsInn1EOIAtOver10Model <- Over10modeling_fun() # end of 10th over model to predict EOI Runs
 runsInn1EOIAtOver15Model <- Over15modeling_fun() # end of 15th over model to predict EOI Runs
+runsInn2EOIAtOver26Model <- Over26modeling_fun()  # end of 26th over model to predict EOI Runs
+runsInn2EOIAtOver30Model <- Over30modeling_fun()
+runsInn2EOIAtOver35Model <- Over35modeling_fun()
+
+winnerInn2AtOver26Model <- Over26winner_fun() # predicting winner at the end of 26th over
+winnerInn2AtOver30Model <- Over30winner_fun()
+winnerInn2AtOver35Model <- Over35winner_fun()
 
 for (row in 1:nrow(matSummTestSeason)) { # Process 1 match at a time after initializing variables from prev row
   # initialize variables used to populate the dataframe with results of predictions
@@ -58,13 +65,105 @@ for (row in 1:nrow(matSummTestSeason)) { # Process 1 match at a time after initi
     #print (Over10EOIRunsPred[1])
     Over15RunsErr <- Over15EOIRunsPred[1] - matSummTestMatch$Inn1EOIRuns
     Over15PerErr <- (Over15RunsErr/matSummTestMatch$Inn1EOIRuns) * 100 # Percentage error w.r.t. actual EOI
-    print (Over10PerErr[1])
+    #print (Over10PerErr[1])
   }  # end of 15th over processing; 1st innings processing done. Moving on to 2nd innings with Over 21 onwards
-  Over26EOIRunsPred = predict (runsInn1EOIAtOver26Model, newdata = matSummTestMatch)
+  
+  Over26EOIRunsPred = predict (runsInn2EOIAtOver26Model, newdata = matSummTestMatch)
   Over26RunsErr <- Over26EOIRunsPred[1] - matSummTestMatch$Inn2EOIRuns
   Over26PerErr <- (Over26RunsErr/matSummTestMatch$Inn2EOIRuns) * 100 # Percentage error w.r.t. actual EOI
-  # And now get the winner prediction based on EOI scores for the 2 innings
+  # And now get the winner prediction based on winner prediction model:
+  Over26WinnerPredBatFirstTeamModel = predict (winnerInn2AtOver26Model, newdata = matSummTestMatch)
+  if (Over26WinnerPredBatFirstTeamModel >0.5 ) {  # Prediction for Team Bat First will win
+    correctmatchWinnerPredictedModelOver26 <- ifelse (matSummTestMatch$BatFirst == matSummTestMatch$winner,
+                                                      TRUE, FALSE )
+  } else { # Model is predicting Team 2 (batting second) will beat Team 1 (bating 1st in Overs 1-20)
+    correctmatchWinnerPredictedModelOver26 <- ifelse (matSummTestMatch$BatSecond == matSummTestMatch$winner,
+                                                      TRUE, FALSE )
+  }
+  # Now verify winner prediction based on EOIRuns prediction:
+  if (Over26EOIRunsPred[1] > matSummTestMatch$Inn1EOIRuns) {  #Predicting 2nd team will score more than Team 1
+    correctmatchWinnerPredictedEOIRunsOver26 <- ifelse(matSummTestMatch$BatSecond == matSummTestMatch$winner,
+                                                       TRUE, FALSE)
+  } else {  #Predicting Team 1 will score more than Team 2
+    correctmatchWinnerPredictedEOIRunsOver26 <- ifelse(matSummTestMatch$BatFirst == matSummTestMatch$winner,
+                                                       TRUE, FALSE)
+  }
+    
+  Over30EOIRunsPred = predict (runsInn2EOIAtOver30Model, newdata = matSummTestMatch)
+  Over30RunsErr <- Over30EOIRunsPred[1] - matSummTestMatch$Inn2EOIRuns
+  Over30PerErr <- (Over30RunsErr/matSummTestMatch$Inn2EOIRuns) * 100 # Percentage error w.r.t. actual EOI
+  # And now get the winner prediction based on winner prediction model:
+  Over30WinnerPredBatFirstTeamModel = predict (winnerInn2AtOver30Model, newdata = matSummTestMatch)
+  if (Over30WinnerPredBatFirstTeamModel >0.5 ) {  # Prediction for Team Bat First will win
+    correctmatchWinnerPredictedModelOver30 <- ifelse (matSummTestMatch$BatFirst == matSummTestMatch$winner,
+                                                      TRUE, FALSE )
+  } else { # Model is predicting Team 2 (batting second) will beat Team 1 (bating 1st in Overs 1-20)
+    correctmatchWinnerPredictedModelOver30 <- ifelse (matSummTestMatch$BatSecond == matSummTestMatch$winner,
+                                                      TRUE, FALSE )
+  }
+  # Now verify winner prediction based on EOIRuns prediction:
+  if (Over30EOIRunsPred[1] > matSummTestMatch$Inn1EOIRuns) {  #Predicting 2nd team will score more than Team 1
+    correctmatchWinnerPredictedEOIRunsOver30 <- ifelse(matSummTestMatch$BatSecond == matSummTestMatch$winner,
+                                                       TRUE, FALSE)
+  } else {  #Predicting Team 1 will score more than Team 2
+    correctmatchWinnerPredictedEOIRunsOver30 <- ifelse(matSummTestMatch$BatFirst == matSummTestMatch$winner,
+                                                       TRUE, FALSE)
+  }
   
+  if (matSummTestMatch$Inn2EOIOvers >= 15) { #Only if the 2nd Innings lasts at least 15 overs (equiv to 35 overs of match)
+    Over35EOIRunsPred = predict (runsInn2EOIAtOver35Model, newdata = matSummTestMatch)
+    Over35RunsErr <- Over35EOIRunsPred[1] - matSummTestMatch$Inn2EOIRuns
+    Over35PerErr <- (Over35RunsErr/matSummTestMatch$Inn2EOIRuns) * 100 # Percentage error w.r.t. actual EOI
+    # And now get the winner prediction based on winner prediction model:
+    Over35WinnerPredBatFirstTeamModel = predict (winnerInn2AtOver35Model, newdata = matSummTestMatch)
+    if (Over35WinnerPredBatFirstTeamModel >0.5 ) {  # Prediction for Team Bat First will win
+      correctmatchWinnerPredictedModelOver35 <- ifelse (matSummTestMatch$BatFirst == matSummTestMatch$winner,
+                                                        TRUE, FALSE )
+    } else { # Model is predicting Team 2 (batting second) will beat Team 1 (bating 1st in Overs 1-20)
+      correctmatchWinnerPredictedModelOver35 <- ifelse (matSummTestMatch$BatSecond == matSummTestMatch$winner,
+                                                        TRUE, FALSE )
+    }
+    # Now verify winner prediction based on EOIRuns prediction:
+    if (Over35EOIRunsPred[1] > matSummTestMatch$Inn1EOIRuns) {  #Predicting 2nd team will score more than Team 1
+      correctmatchWinnerPredictedEOIRunsOver35 <- ifelse(matSummTestMatch$BatSecond == matSummTestMatch$winner,
+                                                         TRUE, FALSE)
+    } else {  #Predicting Team 1 will score more than Team 2
+      correctmatchWinnerPredictedEOIRunsOver35 <- ifelse(matSummTestMatch$BatFirst == matSummTestMatch$winner,
+                                                         TRUE, FALSE)
+    } #Predicting Team 1 will score more than Team 2
+  } #Only if the 2nd Innings lasts at least 15 overs
+  
+  # Now store prediction results in a data frame for summary analysis
+  if (row == 1) {  # create the data frame; 1st row of the season
+  predRes_df <- data.frame (matSummTestMatch$Season, matchID, matSummTestMatch$Inn1EOIRuns, 
+                            Over6EOIRunsPred[1], Over6RunsErr, Over6PerErr, 
+                            Over10EOIRunsPred[1], Over10RunsErr, Over10PerErr,
+                            Over15EOIRunsPred[1], Over15RunsErr, Over15PerErr,
+                            matSummTestMatch$Inn2EOIRuns,
+                            Over26EOIRunsPred[1], Over26RunsErr, Over26PerErr, 
+                            correctmatchWinnerPredictedModelOver26, correctmatchWinnerPredictedEOIRunsOver26,
+                            Over30EOIRunsPred[1], Over30RunsErr, Over30PerErr, 
+                            correctmatchWinnerPredictedModelOver30, correctmatchWinnerPredictedEOIRunsOver30,
+                            Over35EOIRunsPred[1], Over35RunsErr, Over35PerErr, 
+                            correctmatchWinnerPredictedModelOver35, correctmatchWinnerPredictedEOIRunsOver35
+                            ) 
+ } else { # add row to the existing data frame
+   print (row)
+    newrow_df <- data.frame (matSummTestMatch$Season, matchID, matSummTestMatch$Inn1EOIRuns, 
+                             Over6EOIRunsPred[1], Over6RunsErr, Over6PerErr, 
+                             Over10EOIRunsPred[1], Over10RunsErr, Over10PerErr,
+                             Over15EOIRunsPred[1], Over15RunsErr, Over15PerErr,
+                             matSummTestMatch$Inn2EOIRuns,
+                             Over26EOIRunsPred[1], Over26RunsErr, Over26PerErr, 
+                             correctmatchWinnerPredictedModelOver26, correctmatchWinnerPredictedEOIRunsOver26,
+                             Over30EOIRunsPred[1], Over30RunsErr, Over30PerErr, 
+                             correctmatchWinnerPredictedModelOver30, correctmatchWinnerPredictedEOIRunsOver30,
+                             Over35EOIRunsPred[1], Over35RunsErr, Over35PerErr, 
+                             correctmatchWinnerPredictedModelOver35, correctmatchWinnerPredictedEOIRunsOver35
+                              ) 
+    rbind(predRes_df, newrow_df)
+    print ("post rbind")
+   }
   
 } # finished procesing all matches of a season
 

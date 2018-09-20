@@ -197,7 +197,7 @@ Over15modeling_fun <- function() {
   AIC(runsInn1EOIAtOver15Model6)
   #  R2 = .81; AIC = 3726. So stick with the 2nd model as the best predictor after 15 overs of a match
   # let's rename the best fit model after 15 overs to have a more generic name:
-  runsInn1EOIAtOver15Model <- runsInn1EOIAtOver15Model2
+  runsInn1EOIAtOver15Model <- runsInn1EOIAtOver15Model3
   return (runsInn1EOIAtOver15Model)  # end of Over15modeling_fun
 }
 
@@ -234,7 +234,9 @@ Over26modeling_fun <- function() {
                                  data = matSummTrng)
   summary (runsInn1EOIAtOver26Model2)
   AIC(runsInn1EOIAtOver26Model2)
-  ## R2 = 0.62; AIC = 3803
+    ## R2 = 0.62; AIC = 3803
+  runsInn1EOIAtOver26Model <- runsInn1EOIAtOver26Model2
+  return (runsInn1EOIAtOver26Model) 
 } # End of Over26modeling_fun
 
 ## Now create a model to predict the winner of the macth
@@ -248,16 +250,115 @@ Over26winner_fun <- function() {
   return(winnerAtOver26Model1)
 } # End of Over26winner_fun
 
+Over30modeling_fun <- function() {
+  # First, check the correlation among different independent variables:
+  matSumm_cor1 <- na.omit(subset(matSummTrng, na.rm = TRUE, 
+                                 select = c( "Inn2EOIRuns", "Inn1EOIRuns",
+                                             "Over27Runs", "Over27Wkts","Over28Runs", "Over28Wkts", 
+                                             "Over29Runs", "Over29Wkts", "Over30Runs", "Over30Wkts",
+                                             "TeamBattingFirstWon", 
+                                             "interactionVenueBatTeam" , "interactionCurrTeams")))
+  cor(matSumm_cor1)
+  # As expected, correlation with EOI Runs is higher as the number of overs played increases; 
+  # 1st Innings score (Inn1EOIRuns) is sigificant
+  # Runs scored have a much higher correlation with EOI Runs than Wickets lost
+  
+  runsInn1EOIAtOver30Model1 = lm(Inn2EOIRuns ~ Over30Runs + Over29Runs + Over30Wkts + Over29Wkts + 
+                                   Inn1EOIRuns + BatFirst* BatSecond + venueCity + toss +
+                                   TeamBattingFirstWon, 
+                                 data = matSummTrng)
+  summary (runsInn1EOIAtOver30Model1)
+  AIC(runsInn1EOIAtOver30Model1)
+  # R2 = 0.65, AIC = 3874  Coeff for Inn1EOIRuns, TeamBttingFirstWon, and Over29Wkts got 3 asterisks 
+  # Shows significant coeff as Inn1EOIRuns, TeamBattingFirstWon,  Over29Wkts, 
+  # and with 2 asterisks for Over 30 Runs, and with 1 asterisk: Over30Wkts
+  # Try other models for bist fit. This may work best:
+  runsInn1EOIAtOver30Model2 = lm(Inn2EOIRuns ~ Over30Runs +   Over29Wkts +
+                                   Inn1EOIRuns + TeamBattingFirstWon, 
+                                 data = matSummTrng)
+  summary (runsInn1EOIAtOver30Model2)
+  AIC(runsInn1EOIAtOver30Model2)
+  ## R2 = 0.66; AIC = 3757
+  runsInn1EOIAtOver30Model <- runsInn1EOIAtOver30Model2
+  return (runsInn1EOIAtOver30Model) 
+} # End of Over30modeling_fun
+
+## Now create a model to predict the winner of the macth
+Over30winner_fun <- function() {
+  winnerAtOver30Model1 = lm (TeamBattingFirstWon ~ Inn1EOIRuns + Over30Runs +  Over29Wkts,
+                             data = matSummTrng)
+  summary (winnerAtOver30Model1)
+  AIC(winnerAtOver30Model1)
+  # R2 = 0.39, AIC = 427. All coeff significant with 3 asterisks: Inn1EOIRuns, Over30Runs and Over 29Wkts
+  
+  return(winnerAtOver30Model1)
+} # End of Over30winner_fun
 
 
-## Call the functions for linear model for predicting EOI runs at the end of various overs
+Over35modeling_fun <- function() {
+  # First, check the correlation among different independent variables:
+  matSumm_cor1 <- na.omit(subset(matSummTrng, na.rm = TRUE, 
+                                 select = c( "Inn2EOIRuns", "Inn1EOIRuns",
+                                             "Over32Runs", "Over32Wkts","Over33Runs", "Over33Wkts", 
+                                             "Over34Runs", "Over34Wkts", "Over35Runs", "Over35Wkts",
+                                             "TeamBattingFirstWon", 
+                                             "interactionVenueBatTeam" , "interactionCurrTeams")))
+  cor(matSumm_cor1)
+  # Correlation with EOI Runs is higher for Overs 34 and then 33 than Over35; 
+  # 1st Innings score (Inn1EOIRuns) has become less sigificant than Runs at this stage
+  # Runs scored have a much higher correlation with EOI Runs than Wickets lost
+  
+  runsInn1EOIAtOver35Model1 = lm(Inn2EOIRuns ~ Over35Runs + Over34Runs + Over35Wkts + Over34Wkts + 
+                                   Over33Runs + 
+                                   Inn1EOIRuns + BatFirst* BatSecond + venueCity + toss +
+                                   TeamBattingFirstWon, 
+                                 data = matSummTrng)
+  summary (runsInn1EOIAtOver35Model1)
+  AIC(runsInn1EOIAtOver35Model1)
+  # R2 = 0.74, AIC = 3740  Coeff for Inn1EOIRuns, TeamBttingFirstWon, and Over35Runs got 3 asterisks 
+  # and 2 asterisks for Over 34 Runs, and with 1 asterisk: Over30Wkts
+  # Try other models for best fit. 
+  
+  runsInn1EOIAtOver35Model2 = lm(Inn2EOIRuns ~ Over35Runs + Over34Runs + Over35Wkts + Over34Wkts + 
+                                   Inn1EOIRuns + BatFirst* BatSecond, 
+                                 data = matSummTrng)
+  summary (runsInn1EOIAtOver35Model2)
+  AIC(runsInn1EOIAtOver35Model2)
+  # R2 = 0.73; AIC = 3732
+  # This may work best:
+  runsInn1EOIAtOver35Model3 = lm(Inn2EOIRuns ~ Over35Runs +   Over34Runs + Over35Wkts +
+                                   Inn1EOIRuns + TeamBattingFirstWon, 
+                                      data = matSummTrng)
+  summary (runsInn1EOIAtOver35Model3)
+  AIC(runsInn1EOIAtOver35Model3)
+  ## R2 = 0.73; AIC = 3636
+  runsInn1EOIAtOver35Model <- runsInn1EOIAtOver35Model3
+  return (runsInn1EOIAtOver35Model) 
+} # End of Over35modeling_fun
+
+## Now create a model to predict the winner of the macth
+Over35winner_fun <- function() {
+  winnerAtOver35Model1 = lm (TeamBattingFirstWon ~ Inn1EOIRuns + Over35Runs +  Over34Runs + Over35Wkts,
+                             data = matSummTrng)
+  summary (winnerAtOver35Model1)
+  AIC(winnerAtOver35Model1)
+  # R2 = 0.51, AIC = 337. All 4 coeff significant with 3 asterisks
+  
+  return(winnerAtOver35Model1)
+} # End of Over35winner_fun
+
+## Call the functions for linear model for predicting EOI runs at the end of various overs, and winners
 
 runsInn1EOIAtOver6Model <- Over6modeling_fun()
 runsInn1EOIAtOver10Model <- Over10modeling_fun()
 runsInn1EOIAtOver15Model <- Over15modeling_fun()
 runsInn2EOIAtOver26Model <- Over26modeling_fun()
+runsInn2EOIAtOver30Model <- Over30modeling_fun()
+runsInn2EOIAtOver35Model <- Over35modeling_fun()
 
 winnerInn2AtOver26Model <- Over26winner_fun()
+winnerInn2AtOver30Model <- Over30winner_fun()
+winnerInn2AtOver35Model <- Over35winner_fun()
 
 
 
