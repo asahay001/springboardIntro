@@ -1,3 +1,6 @@
+################### CREATE FUNCTIONS FOR CREATING TRAINING AND TEST DATA ########################
+################### AND THEN CREATE PREDICTION MODEL FUNCTIONS AT VARIOUS STAGES OF EACH MATCH ###
+
 ## We will try to predict End of Innings (EOI) runs for Innings 1 at the end of 6th, 10th and 15th overs
 ## for these 20 overs max - a - side match. 
 ## And then for the team batting 2nd (Innings 2), try to predict their EOI score at the end of their
@@ -19,15 +22,8 @@ library ("tidyverse")
 library("dplyr")
 library("ggplot2")
 
-# Read the match summary csv file previously prepared with scorePred_ver1.R
-matSummDet <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep = ",")
 
-# Since match data available is for seasons 2008 through 2017, let's use data from 2008 through season 2014 as
-# training data (7 seasons), and then test the EOI score prediction model on seasons 2015, 
-# then 2016, and finally 2017, one match at a time based on who plays who and where 
-
-maxSeason <- 2014
-
+# Function to create data set for prediction model: either the Traiing Data or the Test Data
 createMatchDataSlice_fun <- function (dataFrame = matSummDet, minSeason, maxSeason, matchId = NULL) {
   if (is.null(matchId)) {
     matSumm_df <- filter(dataFrame, between (Season,  minSeason, maxSeason))  # Slice of data for best fit model
@@ -37,11 +33,9 @@ createMatchDataSlice_fun <- function (dataFrame = matSummDet, minSeason, maxSeas
   return (matSumm_df)
 }
 
-matSummTrng <- createMatchDataSlice_fun(minSeason = 2008, maxSeason = maxSeason)  # Training data: 2008 through 2014 matches
+# Let's start the EOI runs prediction at the end of 6th over (then 10th and finally 15th overs for Innings 1)
 
-# SO let's start the EOI runs prediction at the end of 6th over (then 10th and finally 15th overs for Innings 1)
-
-Over6modeling_fun <- function() {
+Over6modeling_fun <- function(matSummTrng = matSummTrngInit) {
   # First, check the correlation among different independent variables:
   matSumm_cor1 <- na.omit(subset(matSummTrng, na.rm = TRUE, 
                                  select = c("Inn1EOIRuns", "Over2Runs", "Over2Wkts","Over3Runs", "Over3Wkts", 
@@ -93,7 +87,7 @@ Over6modeling_fun <- function() {
   return (runsInn1EOIAtOver6Model)  # end of Over6modeling_fun
 }
 
-Over10modeling_fun <- function() {
+Over10modeling_fun <- function(matSummTrng = matSummTrngInit) {
   # First, check the correlation among different independent variables:
   matSumm_cor1 <- na.omit(subset(matSummTrng, na.rm = TRUE, 
                                  select = c("Inn1EOIRuns", "Over6Runs", "Over6Wkts","Over7Runs", "Over7Wkts", 
@@ -144,7 +138,7 @@ Over10modeling_fun <- function() {
   return (runsInn1EOIAtOver10Model)  # end of Over10modeling_fun
 }
 
-Over15modeling_fun <- function() {
+Over15modeling_fun <- function(matSummTrng = matSummTrngInit) {
   # First, check the correlation among different independent variables:
   matSumm_cor1 <- na.omit(subset(matSummTrng, na.rm = TRUE, 
                                  select = c("Inn1EOIRuns", "Over15Runs", "Over15Wkts",
@@ -202,7 +196,7 @@ Over15modeling_fun <- function() {
 ## Now create functions for choosing the best fit model for the 2nd innings. This is also when we will
 ## try to predict the match winner at the end of 6th, 10th and 15th overs of this innings. 
 
-Over26modeling_fun <- function() {
+Over26modeling_fun <- function(matSummTrng = matSummTrngInit) {
   # First, check the correlation among different independent variables:
   matSumm_cor1 <- na.omit(subset(matSummTrng, na.rm = TRUE, 
                                  select = c( "Inn2EOIRuns", "Inn1EOIRuns",
@@ -239,7 +233,7 @@ Over26modeling_fun <- function() {
 } # End of Over26modeling_fun
 
 ## Now create a model to predict the winner of the macth
-Over26winner_fun <- function() {
+Over26winner_fun <- function(matSummTrng = matSummTrngInit) {
   winnerAtOver26Model1 = lm (TeamBattingFirstWon ~ Inn1EOIRuns + Over26Runs + Over26Wkts,
                              data = matSummTrng)
   summary (winnerAtOver26Model1)
@@ -249,7 +243,7 @@ Over26winner_fun <- function() {
   return(winnerAtOver26Model1)
 } # End of Over26winner_fun
 
-Over30modeling_fun <- function() {
+Over30modeling_fun <- function(matSummTrng = matSummTrngInit) {
   # First, check the correlation among different independent variables:
   matSumm_cor1 <- na.omit(subset(matSummTrng, na.rm = TRUE, 
                                  select = c( "Inn2EOIRuns", "Inn1EOIRuns",
@@ -283,7 +277,7 @@ Over30modeling_fun <- function() {
 } # End of Over30modeling_fun
 
 ## Now create a model to predict the winner of the macth
-Over30winner_fun <- function() {
+Over30winner_fun <- function(matSummTrng = matSummTrngInit) {
   winnerAtOver30Model1 = lm (TeamBattingFirstWon ~ Inn1EOIRuns + Over30Runs +  Over29Wkts,
                              data = matSummTrng)
   summary (winnerAtOver30Model1)
@@ -294,7 +288,7 @@ Over30winner_fun <- function() {
 } # End of Over30winner_fun
 
 
-Over35modeling_fun <- function() {
+Over35modeling_fun <- function(matSummTrng = matSummTrngInit) {
   # First, check the correlation among different independent variables:
   matSumm_cor1 <- na.omit(subset(matSummTrng, na.rm = TRUE, 
                                  select = c( "Inn2EOIRuns", "Inn1EOIRuns",
@@ -336,7 +330,7 @@ Over35modeling_fun <- function() {
 } # End of Over35modeling_fun
 
 ## Now create a model to predict the winner of the macth
-Over35winner_fun <- function() {
+Over35winner_fun <- function(matSummTrng = matSummTrngInit) {
   winnerAtOver35Model1 = lm (TeamBattingFirstWon ~ Inn1EOIRuns + Over35Runs +  Over34Runs + Over35Wkts,
                              data = matSummTrng)
   summary (winnerAtOver35Model1)
@@ -346,7 +340,25 @@ Over35winner_fun <- function() {
   return(winnerAtOver35Model1)
 } # End of Over35winner_fun
 
+##################### All Functions Created Above ##########################################
+
+##################### Call Functions Below ################################################
+
+
 ## Call the functions for linear model for predicting EOI runs at the end of various overs, and winners
+## 1st get the Training Data Set, after reading the wrangled csv created earlier for the entire dataset;
+
+# Read the match summary csv file previously prepared with scorePred_ver1.R
+matSummDet <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep = ",")
+
+# Since match data available is for seasons 2008 through 2017, let's use data from 2008 through season 2014 as
+# training data (7 seasons), and then test the EOI score prediction model on seasons 2015, 
+# then 2016, and finally 2017, one match at a time based on who plays who and where 
+
+minSeasonInit <- 2008  # Minimum Season in the data set is from the year 2008
+maxSeasonInit <- 2014  # Initial Training data to develop prediction model will be up through 2014
+
+matSummTrngInit <- createMatchDataSlice_fun(minSeason = minSeasonInit, maxSeason = maxSeasonInit)  # Training data: 2008 through 2014 matches
 
 runsInn1EOIAtOver6Model <- Over6modeling_fun()
 runsInn1EOIAtOver10Model <- Over10modeling_fun()

@@ -8,7 +8,8 @@
 # set env
 # install.packages ("dplyr")
 # install.packages ("tidyverse")
-# install.packages("caret")   # contains caret::confusionMatrix (tidy)
+# install.packages("caret")   
+# install.packages('caret', dependencies = TRUE) # contains caret::confusionMatrix (tidy)
 
 # Set files dirctory from where to read data (csv files). 
 filesDir <- "C:\\work\\dataScience\\springboard\\springboardIntro"
@@ -26,17 +27,36 @@ matSummDet <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, 
 # training data (7 seasons), and then test the EOI score prediction model on seasons 2015, 
 # then 2016, and finally 2017, one match at a time based on who plays who and where 
 
-TestSeasonSlice <- 2015
-FirstTime <- TRUE
+minMaxSeason <- summarise (matSummDet,  minSeasonInit = min(Season), maxSeasonData = max(Season))
 
-while (TestSeasonSlice < 2018) {  # Start processing matches in each season, one season at a time
-  
+# The initial Training Data will be built on 70% of the seasons in the entire data set:
+minSeasonInit <- as.numeric(minMaxSeason[1])  # converting from data frame to numeric
+maxSeasonData <- as.numeric(minMaxSeason[2])
+numberOfSeasons <- maxSeasonData - minSeasonInit + 1
+SeventyPercentSeason <- 0.7 * numberOfSeasons
+maxSeasonInit <- minSeasonInit + SeventyPercentSeason - 1
+
+# Training Data:
+## First create the Training Data (adding successively each season on which Testing has been completed)
+matSummTrngInit <- createMatchDataSlice_fun(minSeason = minSeasonInit, maxSeason = maxSeasonInit)
+
+# Testing: 
+TestSeasonSlice <- maxSeasonInit + 1
+MaxTestSeasonData <- maxSeasonData
+FirstTime <- TRUE  ## Variable showing if the processing has just started: will create 
+                    # the result data frame. For subsequent processing, will append to this data frame
+
+while (TestSeasonSlice <= MaxTestSeasonData) {  
+              # Start testing model on matches in each season, one season at a time
+    
   matSummTestSeason <- createMatchDataSlice_fun(minSeason = TestSeasonSlice, 
                                               maxSeason = TestSeasonSlice)  # Test data for the model 
 
 # So let's start the EOI runs prediction at the end of 6th over (then 10th and finally 15th overs for Innings 1)
 
-# First call functions to get the best fit models at the end of various overs, and also winner predictors:
+# First call functions to get the best fit models on Training Data at the end of various overs, 
+  # and also winner predictors (Training Data is revised as testing is done on each successive season):
+  
   runsInn1EOIAtOver6Model <- Over6modeling_fun()   # end of 6th over model to predict EOI Runs
   runsInn1EOIAtOver10Model <- Over10modeling_fun() # end of 10th over model to predict EOI Runs
   runsInn1EOIAtOver15Model <- Over15modeling_fun() # end of 15th over model to predict EOI Runs
@@ -218,12 +238,16 @@ while (TestSeasonSlice < 2018) {  # Start processing matches in each season, one
   
   } # finished procesing all matches of a season
   
-  #FirstSeason <- FALSE  # No longer processing matches for test data's 1st season
+  ## Append this season's data to the Training Data (adding successively each season on which Testing has been completed)
+  matSummTrngInit <- createMatchDataSlice_fun(minSeason = minSeasonInit, maxSeason = TestSeasonSlice)
+  
   TestSeasonSlice <- TestSeasonSlice + 1  # Start procesing next season's test data
   
 } # end of Start processing matches in each season, one season at a time
 
-# Now sumarize/analyze the predictions
+##################### ALL PREDICTIONS?CLASSIFICATIONS COMPLETE ##########################
+
+# Now summarize/analyze the predictions
 
 predResSumm_df <- predRes_df %>%
   #select (season, inn1EOIRuns, inn2EOIRuns, errO6Run, errO10Run, errO15Run, errO26Run, 
@@ -256,6 +280,18 @@ predResSumm_df <- predRes_df %>%
           matWinModPer_O26, matWinEOIPer_O26, matWinModPer_O30, matWinEOIPer_O30,
           matWinModPer_O35, matWinEOIPer_O35) %>% 
   distinct()
+
+# Create a confusion matrix for match winner predictions after various overs of 2nd innings
+confMatrix_O26 <- confusionMatrix(as.factor(predRes_df$predO26TeamBatFirstWinMod), 
+                as.factor(predRes_df$actualTeamBatFirstWin))
+confMatrix_O30 <- confusionMatrix(as.factor(predRes_df$predO30TeamBatFirstWinMod), 
+                                  as.factor(predRes_df$actualTeamBatFirstWin))
+confMatrix_O35 <- confusionMatrix(as.factor(predRes_df$predO35TeamBatFirstWinMod), 
+                                  as.factor(predRes_df$actualTeamBatFirstWin))
+
+print (confMatrix_O26, printStats = FALSE)
+print (confMatrix_O30, printStats = FALSE)
+print (confMatrix_O35, printStats = FALSE)
 
 # write out the predictions for EOI Runs and winners to a csv file: 
 
