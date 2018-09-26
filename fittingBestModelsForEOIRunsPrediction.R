@@ -70,7 +70,7 @@ modelAICbestFitEOI_fn <- function (over, matSummTrngInit) {
   lmFormulaLowestAIC <- as.formula(stepRes$call)
   modelNamelowestAIC <- lm(lmFormulaLowestAIC, data = matSummTrngInit)
         ## stepRes$anova[6]  # stores the AIC values
-        ### Using leaps() to dtermine the predictors for the highest adjusted R square:
+        ### Using leaps() to determine the predictors for the highest adjusted R square:
         #leapsResOv6 = leaps(x= matSummTrngInit[,19:30], y = matSummTrngInit[,"Inn1EOIRuns"],
                             # names = names(matSummTrngInit)[19:30], method = "adjr2")
         #leapsResOv6$which[which.max(leapsResOv6$adjr2),] # shows the relevant predictors with the highest adjusted R square
@@ -78,36 +78,36 @@ modelAICbestFitEOI_fn <- function (over, matSummTrngInit) {
 }  # end of create function: modelAICbestFitEOI_fn
 
 
-    ## Now create a model to predict the WINNER of the match
-Over26winner_fun <- function(matSummTrng = matSummTrngInit) {
-  winnerAtOver26Model1 = lm (TeamBattingFirstWon ~ Inn1EOIRuns + Over26Runs + Over26Wkts,
-                             data = matSummTrng)
-  summary (winnerAtOver26Model1)
-  AIC(winnerAtOver26Model1)
-      # R2 = 0.34, AIC = 466. All coeff significant with 3 asterisks: Inn1EOIRuns, Over26Runs and Over 26Wkts
-  return(winnerAtOver26Model1)
-}   # End of Over26winner_fun
-
-    ## Now create a model to predict the winner of the match at end of over 30
-Over30winner_fun <- function(matSummTrng = matSummTrngInit) {
-  winnerAtOver30Model1 = lm (TeamBattingFirstWon ~ Inn1EOIRuns + Over30Runs +  Over29Wkts,
-                             data = matSummTrng)
-  summary (winnerAtOver30Model1)
-  AIC(winnerAtOver30Model1)
-  # R2 = 0.39, AIC = 427. All coeff significant with 3 asterisks: Inn1EOIRuns, Over30Runs and Over 29Wkts
+    ## Now create a model to predict the WINNER of the match at end of Overs 20, 26, 30 and 35
+predictWinner_fn <- function (over = 20, matSummTrng = matSummTrngInit) {
+                                                
+  IndVar <-    "TeamBattingFirstWon"   ## check if the team that batted 1st won 
+  commonVar <- "Inn1EOIOvers+Inn1EOIWkts+Inn1EOIRuns+toss+venueCity+BatFirst+BatSecond+interactionCurrTeams+interactionVenueBatTeam"
+  overVar20 <- "Over6Runs+Over6Wkts+Over9Runs+Over9Wkts+Over10Runs+Over10Wkts+Over12Runs+Over12Wkts+Over15Runs+Over15Wkts+Over18Runs+Over18Wkts+Over19Runs+Over19Wkts"
+  overVar26 <- "Over26Runs+Over26Wkts+Over25Runs+Over25Wkts+Over24Runs+Over24Wkts+Over23Runs+Over23Wkts"
+  overVar30 <- "Over30Runs+Over30Wkts+Over29Runs+Over29Wkts+Over28Runs+Over28Wkts+Over27Runs+Over27Wkts"
+  overVar35 <- "Over35Runs+Over35Wkts+Over34Runs+Over34Wkts+Over33Runs+Over33Wkts+Over32Runs+Over32Wkts+Over31Runs+Over31Wkts"
+  over20DepVar <- paste(overVar20, "+", commonVar)
+  over26DepVar <- paste(overVar26, "+", over20DepVar)
+  over30DepVar <- paste(overVar30, "+", over26DepVar)
+  over35DepVar <- paste(overVar35, "+", over30DepVar)
   
-  return(winnerAtOver30Model1)
-}   # End of Over30winner_fun
-
-    ## Now create a model to predict the winner of the match at end of over 35
-Over35winner_fun <- function(matSummTrng = matSummTrngInit) {
-  winnerAtOver35Model1 = lm (TeamBattingFirstWon ~ Inn1EOIRuns + Over35Runs +  Over34Runs + Over35Wkts,
-                             data = matSummTrng)
-  summary (winnerAtOver35Model1)
-  AIC(winnerAtOver35Model1)
-      # R2 = 0.51, AIC = 337. All 4 coeff significant with 3 asterisks
+  DepVar <- case_when(
+    over == 20 ~ over20DepVar,
+    over == 26 ~ over26DepVar,
+    over == 30 ~ over30DepVar,
+    over == 35 ~ over35DepVar
+  )
+  formula_full <- paste(IndVar, "~", DepVar, sep = " ")
+  formula_base <-paste (IndVar, "~1")
+  null=lm(formula_base, data=matSummTrng)
+  full=lm(formula_full, data=matSummTrng)
+  stepRes <- step(null, scope = list( upper=full, lower=~1 ), direction = "both", trace=FALSE)
+  lmFormulaLowestAIC <- as.formula(stepRes$call)
+  modelNamelowestAIC <- lm(lmFormulaLowestAIC, data = matSummTrng)
   
-  return(winnerAtOver35Model1)
-}   # End of Over35winner_fun
+  return(modelNamelowestAIC)
+}   # End of predictWinner_fn
+
 
 ##################### All Functions Created Above ##########################################

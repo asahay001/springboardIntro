@@ -152,7 +152,20 @@ matDet2018 <- matDet2018 %>%
   select (Season, Match_id, BatFirst, BatSecond, toss, winner, TeamBattingFirstWon,
           venueGround, venueCity, interactionCurrTeams, interactionVenueBatTeam,
           Inn1EOIOvers, Inn1EOIRuns, Inn1EOIWkts, Inn2EOIOvers, Inn2EOIRuns, Inn2EOIWkts, 
-          Over1Runs:Over40Wkts) %>%
+          Over1Runs, Over1Wkts,  Over2Runs, Over2Wkts,  Over3Runs, Over3Wkts, 
+          Over4Runs, Over4Wkts, Over5Runs, Over5Wkts, Over6Runs, Over6Wkts, 
+          Over7Runs, Over7Wkts, Over8Runs, Over8Wkts, Over9Runs, Over9Wkts, 
+          Over10Runs, Over10Wkts, Over11Runs, Over11Wkts, Over12Runs, Over12Wkts, 
+          Over13Runs, Over13Wkts,  Over14Runs, Over14Wkts, Over15Runs, Over15Wkts, 
+          Over16Runs, Over16Wkts, Over17Runs, Over17Wkts, Over18Runs, Over18Wkts,  
+          Over19Runs, Over19Wkts, Over20Runs, Over20Wkts, Over21Runs, Over21Wkts,  
+          Over22Runs, Over22Wkts,  Over23Runs, Over23Wkts, Over24Runs, Over24Wkts,  
+          Over25Runs, Over25Wkts,  Over26Runs, Over26Wkts, Over27Runs, Over27Wkts,  
+          Over28Runs, Over28Wkts,  Over29Runs, Over29Wkts, Over30Runs, Over30Wkts,  
+          Over31Runs, Over31Wkts,  Over32Runs, Over32Wkts, Over33Runs, Over33Wkts,  
+          Over34Runs, Over34Wkts,  Over35Runs, Over35Wkts, Over36Runs, Over36Wkts,  
+          Over37Runs, Over37Wkts, Over38Runs, Over38Wkts, Over39Runs, Over39Wkts, 
+          Over40Runs, Over40Wkts ) %>%
   arrange (Season, Match_id)
 
 write.csv (matDet2018, "wrangled_matchSummaryDataIPL2018only.csv")
