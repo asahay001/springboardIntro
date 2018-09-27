@@ -18,8 +18,8 @@ setwd(filesDir)
 teams <- read.csv(file= 'Team.csv', header = TRUE, sep = ",")
 
     # Read Match.csv which has summary of each match played: opponents, venue, runs scored by each team, match result
-innSumm <- read.csv(file= 'Match.csv', header = TRUE, sep = ",")
-innSumm <- innSumm[order(innSumm$match_id),]
+matSumm <- read.csv(file= 'Match.csv', header = TRUE, sep = ",")
+matSumm <- matSumm[order(matSumm$match_id),]
 
     # Finally read the details of each match from Ball_By_Ball.csv
 matDetFile <- "Ball_By_Ball.csv"
@@ -39,7 +39,7 @@ matDet <- matDet %>% select (Team_Batting, Season, Match_id = MatcH_id, Innings_
           cumWkts = cumsum(Bowler_Wicket + Run_out)) %>%
   select (-c(Runs_Scored, Extra_runs, Bowler_Wicket, Run_out)) %>% # Discard columns not needed anymore since cumRuns and cumWkts are built
   filter (Innings_No < 3) %>%   # Only interested in full innings 1 and 2; not super over innings to break tie
-  left_join(innSumm, by = c("Match_id" = "match_id")) %>%
+  left_join(matSumm, by = c("Match_id" = "match_id")) %>%
     select(Team_Batting:cumWkts, venueGround = Venue_Name, venueCity = City_Name, 
            toss = Toss_Winner, winner = match_winner)
 
@@ -69,19 +69,22 @@ matDet <- matDet %>% left_join(teams, by = c("Team_Batting"= "Team_Id")) %>%
 write.csv (matDet, "wrangled_ballByBallDataIPL.csv")
 
       ## Now build dataset with each match as a data row so that we can predict EOI scores in each match at
-      ## for the team batting 1st at the end of 5th, 10th and 15th overs (with increasing accuracy)
+      ## for the team batting 1st at the end of 6th, 10th and 15th overs (with increasing accuracy)
       ## and predict the macth winner starting in the 2nd team's batting innings at the end of
-      ## the 5th, 10th and 15th overs (so for the match 20+5, 20 + 10, and 20 + 15 overs, assuming
+      ## the 6th, 10th and 15th overs (so for the match 20+6, 20 + 10, and 20 + 15 overs, assuming
       ## the team batting 1st bats all of its 20 overs)
       ## So we will get runs and wickets data in each row for each over: 1 through 15 which will
       ## be used in creating the prediction model for EOI score and match winner
       
           ##  mutate (!!(sym(paste("Over", as.character(cumOver), "Runs", sep =""))) := cumRuns)
 
-matDetOverStats <- matDet %>% ungroup %>% select (Season:cumWkts) %>%
+matDetOverStats <- matDet %>% 
   group_by(Season, Match_id, Innings_No, Over_id) %>%
   filter (Over_id %in% seq(1, to = 20, by =1 ) & Ball_id == max(Ball_id, na.rm = TRUE)) %>%
   ungroup() %>%  # ungrouping is necessary because Over_id as part of the group_by cannot be updated
+  group_by(Season, Match_id, Innings_No) %>%
+  mutate(EOIOver = max(Over_id), EOIRuns = max(cumRuns), EOIWkts = max(cumWkts)) %>%
+  ungroup() %>%
   mutate (Over_id = ifelse (Innings_No == 2, Over_id + 20, Over_id)) %>% # 2nd Innings starts with the 21st over of the match
   mutate (cumOverRuns = paste ("Over", as.character(Over_id), "Runs", sep = ""),
           cumOverWkts = paste ("Over", as.character(Over_id), "Wkts", sep = "")
@@ -92,7 +95,7 @@ matDetOverStats <- spread(matDetOverStats, cumOverRuns, cumRuns)
 matDetOverStats <- spread(matDetOverStats, cumOverWkts, cumWkts)
         #matDetOverStats[is.na(matDetOverStats)] <- 0  # NA values can be safely replaced with 0 in this dataset for further computation
 
-matDetOverStats <- matDetOverStats %>% select ( -cumOver, -Ball_id, -Team_Bowling) %>%
+matDetOverStats <- matDetOverStats %>% select ( -Ball_id, -Team_Bowling) %>%
   group_by(Season, Match_id) %>%
   mutate (Over1Runs = ifelse(max(Over1Runs,na.rm=TRUE) >=0, max(Over1Runs,na.rm=TRUE), -1), 
           Over1Wkts = max(Over1Wkts,na.rm=TRUE), 
@@ -177,42 +180,31 @@ matDetOverStats <- matDetOverStats %>% select ( -cumOver, -Ball_id, -Team_Bowlin
           ) %>%  ## filter to keep only 1 row per match innings, since all the important row info is now in columns
   group_by(Season, Match_id, Innings_No) %>%
   filter (Over_id == min(Over_id)) %>%
-  left_join(innSumm, by = c("Season", "Match_id", "Innings_No")) %>% 
   mutate (EOIInnOvers = paste ("Inn", as.character(Innings_No), "EOIOvers", sep = ""),
           EOIInnRuns = paste ("Inn", as.character(Innings_No), "EOIRuns", sep = ""),
-          EOIInnWkts = paste ("Inn", as.character(Innings_No), "EOIWkts", sep = "")
-          ) %>%
-  select (Season, Match_id, Innings_No, Over_id, BatFirst = TeamNameBat, BatSecond = TeamNameBowl, toss, winner,
+          EOIInnWkts = paste ("Inn", as.character(Innings_No), "EOIWkts", sep = ""),
+          interactionCurrTeams = as.numeric(TeamNameBat) * as.numeric(TeamNameBowl), 
+          interactionVenueBatTeam = as.numeric(TeamNameBat) * as.numeric(venueCity) * 
+                                          as.numeric(TeamNameBowl)) %>%
+  select (Season, Match_id, Innings_No, Over_id, 
+          BatFirst = TeamNameBat, BatSecond = TeamNameBowl, toss, winner,
           TeamBattingFirstWon = TeamBattingWon, venueGround, venueCity, 
           EOIInnOvers:EOIInnWkts, EOIOver:EOIWkts, 
           interactionCurrTeams, interactionVenueBatTeam,
           Over1Runs, Over1Wkts,  Over2Runs, Over2Wkts,  Over3Runs, Over3Wkts, 
-          Over4Runs = Over4Runs.x, Over4Wkts = Over4Wkts.x,  
-          Over5Runs, Over5Wkts, 
-          Over6Runs = Over6Runs.x, Over6Wkts = Over6Wkts.x, 
-          Over7Runs, Over7Wkts, 
-          Over8Runs = Over8Runs.x, Over8Wkts = Over8Wkts.x, 
-          Over9Runs, Over9Wkts, 
-          Over10Runs = Over10Runs.x, Over10Wkts = Over10Wkts.x, 
-          Over11Runs, Over11Wkts, 
-          Over12Runs = Over12Runs.x, Over12Wkts = Over12Wkts.x, 
-          Over13Runs, Over13Wkts,  Over14Runs, Over14Wkts, 
-          Over15Runs = Over15Runs.x, Over15Wkts = Over15Wkts.x, 
-          Over16Runs, Over16Wkts, 
-          Over17Runs = Over17Runs.x, Over17Wkts = Over17Wkts.x, 
-          Over18Runs, Over18Wkts,  Over19Runs, Over19Wkts, 
-          Over20Runs = Over20Runs.x, Over20Wkts = Over20Wkts.x, 
-          Over21Runs, Over21Wkts,  Over22Runs, Over22Wkts,  Over23Runs, Over23Wkts, 
-          Over24Runs, Over24Wkts,  Over25Runs, Over25Wkts,  Over26Runs, Over26Wkts, 
-          Over27Runs, Over27Wkts,  Over28Runs, Over28Wkts,  Over29Runs, Over29Wkts, 
-          Over30Runs, Over30Wkts,  Over31Runs, Over31Wkts,  Over32Runs, Over32Wkts, 
-          Over33Runs, Over33Wkts,  Over34Runs, Over34Wkts,  Over35Runs, Over35Wkts, 
-          Over36Runs, Over36Wkts,  Over37Runs, Over37Wkts, 
-          Over38Runs, Over38Wkts, 
-          Over39Runs, Over39Wkts, 
-          Over40Runs, Over40Wkts 
-          )
-
+          Over4Runs, Over4Wkts, Over5Runs, Over5Wkts, Over6Runs, Over6Wkts, 
+          Over7Runs, Over7Wkts, Over8Runs, Over8Wkts, Over9Runs, Over9Wkts, 
+          Over10Runs, Over10Wkts, Over11Runs, Over11Wkts, Over12Runs, Over12Wkts, 
+          Over13Runs, Over13Wkts,  Over14Runs, Over14Wkts, Over15Runs, Over15Wkts, 
+          Over16Runs, Over16Wkts, Over17Runs, Over17Wkts, Over18Runs, Over18Wkts,  
+          Over19Runs, Over19Wkts, Over20Runs, Over20Wkts, Over21Runs, Over21Wkts,  
+          Over22Runs, Over22Wkts,  Over23Runs, Over23Wkts, Over24Runs, Over24Wkts,  
+          Over25Runs, Over25Wkts,  Over26Runs, Over26Wkts, Over27Runs, Over27Wkts,  
+          Over28Runs, Over28Wkts,  Over29Runs, Over29Wkts, Over30Runs, Over30Wkts,  
+          Over31Runs, Over31Wkts,  Over32Runs, Over32Wkts, Over33Runs, Over33Wkts,  
+          Over34Runs, Over34Wkts,  Over35Runs, Over35Wkts, Over36Runs, Over36Wkts,  
+          Over37Runs, Over37Wkts, Over38Runs, Over38Wkts, Over39Runs, Over39Wkts, 
+          Over40Runs, Over40Wkts ) 
 matDetOverStats <- spread(matDetOverStats, EOIInnOvers, EOIOver)
 matDetOverStats <- spread(matDetOverStats, EOIInnRuns, EOIRuns)
 matDetOverStats <- spread(matDetOverStats, EOIInnWkts, EOIWkts)

@@ -328,19 +328,19 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
 if (runType == "FinalTest") {
   predRes_df1 <- predRes_df %>% group_by (season, matchID) %>%
     filter (matchID == max(matchID)) %>% 
-    filter(season == MaxTestSeasonData)
+    filter(season == MaxTestSeasonData & matchID >= 7952)
 } else {
   predRes_df1 <- predRes_df %>% group_by (season, matchID) %>%
     filter (matchID == max(matchID)) 
 }
-confMatrix_O20 <- confusionMatrix(as.factor(predRes_df1$predO20TeamBatFirstWinMod), 
-                                  as.factor(predRes_df1$actualTeamBatFirstWin))
-confMatrix_O26 <- confusionMatrix(as.factor(predRes_df1$predO26TeamBatFirstWinMod), 
-                                  as.factor(predRes_df1$actualTeamBatFirstWin))
-confMatrix_O30 <- confusionMatrix(as.factor(predRes_df1$predO30TeamBatFirstWinMod), 
-                                  as.factor(predRes_df1$actualTeamBatFirstWin))
-confMatrix_O35 <- confusionMatrix(as.factor(predRes_df1$predO35TeamBatFirstWinMod), 
-                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O20 <- suppressWarnings(confusionMatrix(as.factor(predRes_df1$predO20TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin)))
+confMatrix_O26 <- suppressWarnings(confusionMatrix(as.factor(predRes_df1$predO26TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin)))
+confMatrix_O30 <- suppressWarnings(confusionMatrix(as.factor(predRes_df1$predO30TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin)))
+confMatrix_O35 <- suppressWarnings(confusionMatrix(as.factor(predRes_df1$predO35TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin)))
 
             print (confMatrix_O20, printStats = FALSE)            
             print (confMatrix_O26, printStats = FALSE)
