@@ -71,14 +71,16 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
               # Start testing model on matches in each season, one season at a time
   if (runType != "FinalTest") {
       matSummTestSeason <- createMatchDataSlice_fun(minSeason = TestSeasonSlice, 
-                                              maxSeason = TestSeasonSlice)  # Test data for the model 
-  }  # else matSummTestSeason has already been read as 2018 data
+                                              maxSeason = TestSeasonSlice)  # Test data for the model: successively 2015, 2016 and 2017 season data 
+  }      # else matSummTestSeason has already been read as 2018 data
  
          # So let's start the EOI runs prediction at the end of 6th over (then 10th and finally 15th overs for Innings 1)
 
-        # First call functions to get the best fit models on Training Data at the end of various overs, 
-        # and also winner predictors (Training Data is revised as testing is done on each successive season):
+            ## First update with recent winners between 2 teams in recent matches
+  matSummTrngInit = updateRecentWinsInDataSet_fn (matSummTrngInit)
   
+  # Now call functions to get the best fit models on Training Data at the end of various overs, 
+  # and also winner predictors (Training Data is revised as testing is done on each successive season):
   runsInn1EOIAtOver6Model  <- modelAICbestFitEOI_fn (over= 6, matSummTrngInit) # end of 6th over model to predict EOI Runs
   runsInn1EOIAtOver10Model <- modelAICbestFitEOI_fn (over=10, matSummTrngInit) # end of 10th over model to predict EOI Runs
   runsInn1EOIAtOver15Model <- modelAICbestFitEOI_fn (over=15, matSummTrngInit) # end of 15th over model to predict EOI Runs
@@ -86,11 +88,24 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
   runsInn2EOIAtOver30Model <- modelAICbestFitEOI_fn (over=30, matSummTrngInit)
   runsInn2EOIAtOver35Model <- modelAICbestFitEOI_fn (over=35, matSummTrngInit)
 
+  winnerAtOver0Model      <- predictWinner_fn (over =  0, matSummTrng = matSummTrngInit)
   winnerInn2AtOver20Model <- predictWinner_fn (over = 20, matSummTrng = matSummTrngInit)
   winnerInn2AtOver26Model <- predictWinner_fn (over = 26, matSummTrng = matSummTrngInit) # predicting winner at the end of 26th over
   winnerInn2AtOver30Model <- predictWinner_fn (over = 30, matSummTrng = matSummTrngInit)
   winnerInn2AtOver35Model <- predictWinner_fn (over = 35, matSummTrng = matSummTrngInit)
-
+  
+  winnerInn2AtOver20Model$xlevels[["BatSecond"]] <- 
+    union(winnerInn2AtOver20Model$xlevels[["BatSecond"]], levels(matSummTestSeason$BatSecond))
+  winnerInn2AtOver26Model$xlevels[["BatSecond"]] <- 
+    union(winnerInn2AtOver26Model$xlevels[["BatSecond"]], levels(matSummTestSeason$BatSecond))
+  winnerInn2AtOver30Model$xlevels[["BatSecond"]] <- 
+    union(winnerInn2AtOver30Model$xlevels[["BatSecond"]], levels(matSummTestSeason$BatSecond))
+  winnerInn2AtOver35Model$xlevels[["BatSecond"]] <- 
+    union(winnerInn2AtOver35Model$xlevels[["BatSecond"]], levels(matSummTestSeason$BatSecond))
+  
+  winnerAtOver0Model$xlevels[["BatFirst"]] <- 
+    union(winnerAtOver0Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  
   for (row in 1:nrow(matSummTestSeason)) {  # Process 1 match at a time after initializing variables from prev row
             # initialize variables used to populate the dataframe with results of predictions
     matchID <- matSummTestSeason$Match_id[row]  # 1 row only per match
@@ -117,9 +132,24 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
                       #print (Over10PerErr[1])
     }  # end of 15th over processing
     
-                  # Now take a shot at predciting winner at the end of 1st innings; 
+                  # Try to predict match winner at the start of the match, right after the
+                  # toss, before even a ball is bowled. This is the baseline winner prediction
+    
+    Over0WinnerPredBatFirstTeamModel = predict (winnerAtOver0Model, newdata = matSummTestMatch)
+    if (Over0WinnerPredBatFirstTeamModel >0.5 ) {  # Prediction that Team Batting First will win
+      correctmatchWinnerPredictedModelOver0 <- ifelse (matSummTestMatch$BatFirst == matSummTestMatch$winner,
+                                                        TRUE, FALSE )
+      predO0TeamBatFirstWinMod <- TRUE
+    } else { # Model is predicting Team 2 (batting second) will beat Team 1 (batting 1st in Overs 1-20)
+      correctmatchWinnerPredictedModelOver0 <- ifelse (matSummTestMatch$BatSecond == matSummTestMatch$winner,
+                                                        TRUE, FALSE )
+      predO0TeamBatFirstWinMod <- FALSE
+    } 
+                 # Now take a shot at predciting winner at the end of 1st innings; 
                   # I am getting a low adjusted R2 of 0.21 !!
+                  # print ("20 start")
     Over20WinnerPredBatFirstTeamModel = predict (winnerInn2AtOver20Model, newdata = matSummTestMatch)
+                  # print ("20 done")
     if (Over20WinnerPredBatFirstTeamModel >0.5 ) {  # Prediction that Team Batting First will win
       correctmatchWinnerPredictedModelOver20 <- ifelse (matSummTestMatch$BatFirst == matSummTestMatch$winner,
                                                         TRUE, FALSE )
@@ -130,6 +160,7 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
       predO20TeamBatFirstWinMod <- FALSE
     }
                   #1st innings processing done. Moving on to 2nd innings with Over 21 onwards
+                  # print ("26 start")
     Over26EOIRunsPred = predict (runsInn2EOIAtOver26Model, newdata = matSummTestMatch)
     Over26RunsErr <- Over26EOIRunsPred[1] - matSummTestMatch$Inn2EOIRuns
     Over26PerErr <- (Over26RunsErr/matSummTestMatch$Inn2EOIRuns) * 100 # Percentage error w.r.t. actual EOI
@@ -210,70 +241,66 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
           # Now store prediction results in a data frame for summary analysis
     if (FirstTime) {  # create the data frame only 1 time of the processing
       FirstTime <- FALSE
-      predRes_df <- data.frame (season = matSummTestMatch$Season, matchID, 
-                            inn1EOIRuns = matSummTestMatch$Inn1EOIRuns, 
-                            predO6EOIRuns = Over6EOIRunsPred[1], 
-                            errO6Run = round(Over6RunsErr,2), errO6Per = round(Over6PerErr,2), 
-                            predO10EOIRuns = Over10EOIRunsPred[1], 
-                            errO10Run = round(Over10RunsErr,2), errO10Per = round(Over10PerErr,2),
-                            predO15EOIRuns = Over15EOIRunsPred[1], 
-                            errO15Run = round(Over15RunsErr,2), errO15Per = round(Over15PerErr,2),
-                            predO20TeamBatFirstWinMod, 
+      predRes_df <- data.frame (rowID = 1,
+                            season = matSummTestMatch$Season, matchID,
                             actualTeamBatFirstWin = matSummTestMatch$TeamBattingFirstWon,
-                            correctPredWinModO20 = correctmatchWinnerPredictedModelOver20,
-                            inn2EOIRuns = matSummTestMatch$Inn2EOIRuns,
-                            predO26EOIRuns = Over26EOIRunsPred[1], 
-                            errO26Run = round(Over26RunsErr,2), errO26Per = round(Over26PerErr,2), 
-                            predO26TeamBatFirstWinMod, 
-                            actualTeamBatFirstWin = matSummTestMatch$TeamBattingFirstWon,
-                            correctPredWinModO26 = correctmatchWinnerPredictedModelOver26,
-                            predO26TeamBatFirstWinEOI, 
-                            correctPredWinEOIO26 = correctmatchWinnerPredictedEOIRunsOver26,
-                            predO30EOIRuns = Over30EOIRunsPred[1], 
+                            predO0TeamBatFirstWinMod, predO20TeamBatFirstWinMod,
+                            predO26TeamBatFirstWinMod, predO30TeamBatFirstWinMod,
+                            predO35TeamBatFirstWinMod, predO26TeamBatFirstWinEOI,
+                            predO30TeamBatFirstWinEOI, predO35TeamBatFirstWinEOI,
+                            inn1EOIRuns    = matSummTestMatch$Inn1EOIRuns,
+                            predO6EOIRuns  = round(Over6EOIRunsPred[1]),
+                            predO10EOIRuns = round(Over10EOIRunsPred[1]),
+                            predO15EOIRuns = round(Over15EOIRunsPred[1]),
+                            inn2EOIRuns    = matSummTestMatch$Inn2EOIRuns,
+                            predO26EOIRuns = round(Over26EOIRunsPred[1]),
+                            predO30EOIRuns = round(Over30EOIRunsPred[1]),
+                            predO35EOIRuns = round(Over35EOIRunsPred[1]),
+                            errO35Run = round(Over35RunsErr,2), errO35Per = round(Over35PerErr,2),
                             errO30Run = round(Over30RunsErr,2), errO30Per = round(Over30PerErr,2),
-                            predO30TeamBatFirstWinMod,
-                            correctPredWinModO30 = correctmatchWinnerPredictedModelOver30,
-                            predO30TeamBatFirstWinEOI,
+                            errO26Run = round(Over26RunsErr,2), errO26Per = round(Over26PerErr,2),
+                            errO15Run = round(Over15RunsErr,2), errO15Per = round(Over15PerErr,2),
+                            errO10Run = round(Over10RunsErr,2), errO10Per = round(Over10PerErr,2),
+                            errO6Run  = round(Over6RunsErr,2), errO6Per = round(Over6PerErr,2),
+                            correctPredWinEOIO35 = correctmatchWinnerPredictedEOIRunsOver35,
                             correctPredWinEOIO30 = correctmatchWinnerPredictedEOIRunsOver30,
-                            predO30EOIRuns = Over30EOIRunsPred[1], 
-                            errO35Run = round(Over35RunsErr,2), errO35Per = round(Over35PerErr,2), 
-                            predO35TeamBatFirstWinMod,
+                            correctPredWinEOIO26 = correctmatchWinnerPredictedEOIRunsOver26,
                             correctPredWinModO35 = correctmatchWinnerPredictedModelOver35,
-                            predO35TeamBatFirstWinEOI,
-                            correctPredWinEOIO35 = correctmatchWinnerPredictedEOIRunsOver35
+                            correctPredWinModO30 = correctmatchWinnerPredictedModelOver30,
+                            correctPredWinModO26 = correctmatchWinnerPredictedModelOver26,
+                            correctPredWinModO20 = correctmatchWinnerPredictedModelOver20,
+                            correctPredWinModO0  = correctmatchWinnerPredictedModelOver0
                             ) 
   } else { # add row to the existing data frame
-      newrow_df <- data.frame (season = matSummTestMatch$Season, matchID, 
-                             inn1EOIRuns = matSummTestMatch$Inn1EOIRuns, 
-                             predO6EOIRuns = Over6EOIRunsPred[1], 
-                             errO6Run = round(Over6RunsErr,2), errO6Per = round(Over6PerErr,2), 
-                             predO10EOIRuns = Over10EOIRunsPred[1], 
-                             errO10Run = round(Over10RunsErr,2), errO10Per = round(Over10PerErr,2),
-                             predO15EOIRuns = Over15EOIRunsPred[1], 
-                             errO15Run = round(Over15RunsErr,2), errO15Per = round(Over15PerErr,2),
-                             predO20TeamBatFirstWinMod, 
-                             actualTeamBatFirstWin = matSummTestMatch$TeamBattingFirstWon,
-                             correctPredWinModO20 = correctmatchWinnerPredictedModelOver20,
-                             inn2EOIRuns = matSummTestMatch$Inn2EOIRuns,
-                             predO26EOIRuns = Over26EOIRunsPred[1], 
-                             errO26Run = round(Over26RunsErr,2), errO26Per = round(Over26PerErr,2), 
-                             predO26TeamBatFirstWinMod, 
-                             actualTeamBatFirstWin = matSummTestMatch$TeamBattingFirstWon,
-                             correctPredWinModO26 = correctmatchWinnerPredictedModelOver26,
-                             predO26TeamBatFirstWinEOI, 
-                             correctPredWinEOIO26 = correctmatchWinnerPredictedEOIRunsOver26,
-                             predO30EOIRuns = Over30EOIRunsPred[1], 
-                             errO30Run = round(Over30RunsErr,2), errO30Per = round(Over30PerErr,2),
-                             predO30TeamBatFirstWinMod,
-                             correctPredWinModO30 = correctmatchWinnerPredictedModelOver30,
-                             predO30TeamBatFirstWinEOI,
-                             correctPredWinEOIO30 = correctmatchWinnerPredictedEOIRunsOver30,
-                             predO30EOIRuns = Over30EOIRunsPred[1], 
-                             errO35Run = round(Over35RunsErr,2), errO35Per = round(Over35PerErr,2), 
-                             predO35TeamBatFirstWinMod,
-                             correctPredWinModO35 = correctmatchWinnerPredictedModelOver35,
-                             predO35TeamBatFirstWinEOI,
-                             correctPredWinEOIO35 = correctmatchWinnerPredictedEOIRunsOver35
+      newrow_df <- data.frame (rowID = nrow(predRes_df) + 1,
+                               season = matSummTestMatch$Season, matchID,
+                               actualTeamBatFirstWin = matSummTestMatch$TeamBattingFirstWon,
+                               predO0TeamBatFirstWinMod, predO20TeamBatFirstWinMod,
+                               predO26TeamBatFirstWinMod, predO30TeamBatFirstWinMod,
+                               predO35TeamBatFirstWinMod, predO26TeamBatFirstWinEOI,
+                               predO30TeamBatFirstWinEOI, predO35TeamBatFirstWinEOI,
+                               inn1EOIRuns    = matSummTestMatch$Inn1EOIRuns,
+                               predO6EOIRuns  = round(Over6EOIRunsPred[1]),
+                               predO10EOIRuns = round(Over10EOIRunsPred[1]),
+                               predO15EOIRuns = round(Over15EOIRunsPred[1]),
+                               inn2EOIRuns    = matSummTestMatch$Inn2EOIRuns,
+                               predO26EOIRuns = round(Over26EOIRunsPred[1]),
+                               predO30EOIRuns = round(Over30EOIRunsPred[1]),
+                               predO35EOIRuns = round(Over35EOIRunsPred[1]),
+                               errO35Run = round(Over35RunsErr), errO35Per = round(Over35PerErr,1),
+                               errO30Run = round(Over30RunsErr), errO30Per = round(Over30PerErr,1),
+                               errO26Run = round(Over26RunsErr), errO26Per = round(Over26PerErr,1),
+                               errO15Run = round(Over15RunsErr), errO15Per = round(Over15PerErr,1),
+                               errO10Run = round(Over10RunsErr), errO10Per = round(Over10PerErr,1),
+                               errO6Run  = round(Over6RunsErr), errO6Per = round(Over6PerErr,1),
+                               correctPredWinEOIO35 = correctmatchWinnerPredictedEOIRunsOver35,
+                               correctPredWinEOIO30 = correctmatchWinnerPredictedEOIRunsOver30,
+                               correctPredWinEOIO26 = correctmatchWinnerPredictedEOIRunsOver26,
+                               correctPredWinModO35 = correctmatchWinnerPredictedModelOver35,
+                               correctPredWinModO30 = correctmatchWinnerPredictedModelOver30,
+                               correctPredWinModO26 = correctmatchWinnerPredictedModelOver26,
+                               correctPredWinModO20 = correctmatchWinnerPredictedModelOver20,
+                               correctPredWinModO0  = correctmatchWinnerPredictedModelOver0
                               ) 
       predRes_df <- rbind(predRes_df, newrow_df)
     }
@@ -282,7 +309,7 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
   
           ## Append this season's data to the Training Data (adding successively each season on which Testing has been completed)
   matSummTrngInit <- createMatchDataSlice_fun(minSeason = minSeasonInit, maxSeason = TestSeasonSlice)
-              print (TestSeasonSlice)
+              # print (TestSeasonSlice)
   TestSeasonSlice <- TestSeasonSlice + 1  # Start procesing next season's test data
   
 } # end of Start processing matches in each season, one season at a time
@@ -297,60 +324,82 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
             SEO15 = (errO15Run) ^ 2, SEO26 = (errO26Run) ^ 2, 
             SEO30 = (errO30Run) ^ 2, SEO35 = (errO35Run) ^2 ) %>%
     group_by(season) %>% 
-    mutate ( RMSE_O6 =  (sum(SEO6)/n()) ^ 0.5, 
-             RMSE_O10 = (sum(SEO10)/n()) ^ 0.5, RMSE_O15 = (sum(SEO15)/n()) ^ 0.5,
-             RMSE_O26 = (sum(SEO26)/n()) ^ 0.5, 
-             RMSE_O30 = (sum(SEO30)/n()) ^ 0.5, RMSE_O35 = (sum(SEO35)/n()) ^ 0.5, 
+    mutate ( RMSE_O6 =  round((sum(SEO6)/n()) ^ 0.5,2), 
+             RMSE_O10 = round((sum(SEO10)/n()) ^ 0.5,2), RMSE_O15 = round((sum(SEO15)/n()) ^ 0.5,2),
+             RMSE_O26 = round((sum(SEO26)/n()) ^ 0.5,2), 
+             RMSE_O30 = round((sum(SEO30)/n()) ^ 0.5,2), RMSE_O35 = round((sum(SEO35)/n()) ^ 0.5,2), 
                       # Now compute R square: R2 = 1 - (SSE/SST)
-             R2_O6 =  1 - (sum(SEO6)/sum((inn1EOIRuns - mean(inn1EOIRuns))^2)),
-             R2_O10 = 1 - (sum(SEO10)/sum((inn1EOIRuns - mean(inn1EOIRuns))^2)),
-             R2_O15 = 1 - (sum(SEO15)/sum((inn1EOIRuns - mean(inn1EOIRuns))^2)),
-             R2_O26 = 1 - (sum(SEO26)/sum((inn2EOIRuns - mean(inn2EOIRuns))^2)),
-             R2_O30 = 1 - (sum(SEO30)/sum((inn2EOIRuns - mean(inn2EOIRuns))^2)),
-             R2_O35 = 1 - (sum(SEO35)/sum((inn2EOIRuns - mean(inn2EOIRuns))^2)),
+             adjRsqr_O6  = round(1 - (sum(SEO6) /sum((inn1EOIRuns - mean(inn1EOIRuns))^2)),2),
+             adjRsqr_O10 = round(1 - (sum(SEO10)/sum((inn1EOIRuns - mean(inn1EOIRuns))^2)),2),
+             adjRsqr_O15 = round(1 - (sum(SEO15)/sum((inn1EOIRuns - mean(inn1EOIRuns))^2)),2),
+             adjRsqr_O26 = round(1 - (sum(SEO26)/sum((inn2EOIRuns - mean(inn2EOIRuns))^2)),2),
+             adjRsqr_O30 = round(1 - (sum(SEO30)/sum((inn2EOIRuns - mean(inn2EOIRuns))^2)),2),
+             adjRsqr_O35 = round(1 - (sum(SEO35)/sum((inn2EOIRuns - mean(inn2EOIRuns))^2)),2),
                     # Now compute how many times our model correctly predicted match winner per season
-             matWinModPer_O20 = sum(correctPredWinModO20) *100/n(),
-             matWinModPer_O26 = sum(correctPredWinModO26) *100/n(),
-             matWinEOIPer_O26 = sum(correctPredWinEOIO26) *100/n(), 
-             matWinModPer_O30 = sum(correctPredWinModO30) *100/n(),
-             matWinEOIPer_O30 = sum(correctPredWinEOIO30) *100/n(),
-             matWinModPer_O35 = sum(correctPredWinModO35) *100/n(),
-             matWinEOIPer_O35 = sum(correctPredWinEOIO35) *100/n()
+             matWinModPer_O0  = round(sum(correctPredWinModO0)  *100/n()),
+             matWinModPer_O20 = round(sum(correctPredWinModO20) *100/n()),
+             matWinModPer_O26 = round(sum(correctPredWinModO26) *100/n()),
+             matWinModPer_O30 = round(sum(correctPredWinModO30) *100/n()),
+             matWinModPer_O35 = round(sum(correctPredWinModO35) *100/n()),
+             matWinEOIPer_O26 = round(sum(correctPredWinEOIO26) *100/n()), 
+             matWinEOIPer_O30 = round(sum(correctPredWinEOIO30) *100/n()),
+             matWinEOIPer_O35 = round(sum(correctPredWinEOIO35) *100/n())
              ) %>%
-    select (season, RMSE_O6, RMSE_O10,RMSE_O15, RMSE_O26, RMSE_O30,RMSE_O35,
-            R2_O6, R2_O10, R2_O15, R2_O26, R2_O30, R2_O35, matWinModPer_O20,
-            matWinModPer_O26, matWinEOIPer_O26, matWinModPer_O30, matWinEOIPer_O30,
-            matWinModPer_O35, matWinEOIPer_O35) %>% 
+    select (season, PredictionAccuracyOver0 = matWinModPer_O0, 
+            PredictionAccuracyOver20 = matWinModPer_O20,
+            PredictionAccuracyOver26 = matWinModPer_O26, 
+            PredictionAccuracyOver30 = matWinModPer_O30, 
+            PredictionAccuracyOver35 = matWinModPer_O35, 
+            matWinEOIPer_O26, matWinEOIPer_O30, matWinEOIPer_O35,
+            RMSE_O6, RMSE_O10,RMSE_O15, RMSE_O26, RMSE_O30,
+            RMSE_O35, adjRsqr_O6, adjRsqr_O10, adjRsqr_O15, 
+            adjRsqr_O26, adjRsqr_O30, adjRsqr_O35 
+            ) %>% 
     distinct()
 #  } # if not (runType == "FinalTest" )
 
         # Create a confusion matrix for match winner predictions after various overs of 2nd innings
+predRes_df1 <- predRes_df %>% group_by (season, matchID) %>% filter (rowID == max(rowID)) 
+                                            ## That filtered out multiple runs of FinalTest data
 if (runType == "FinalTest") {
-  predRes_df1 <- predRes_df %>% group_by (season, matchID) %>%
-    filter (matchID == max(matchID)) %>% 
-    filter(season == MaxTestSeasonData & matchID >= 7952)
-} else {
-  predRes_df1 <- predRes_df %>% group_by (season, matchID) %>%
-    filter (matchID == max(matchID)) 
+  predRes_df1 <- predRes_df1 %>% filter(season == MaxTestSeasonData) ## Just for 2018 season
 }
-confMatrix_O20 <- suppressWarnings(confusionMatrix(as.factor(predRes_df1$predO20TeamBatFirstWinMod), 
-                                  as.factor(predRes_df1$actualTeamBatFirstWin)))
-confMatrix_O26 <- suppressWarnings(confusionMatrix(as.factor(predRes_df1$predO26TeamBatFirstWinMod), 
-                                  as.factor(predRes_df1$actualTeamBatFirstWin)))
-confMatrix_O30 <- suppressWarnings(confusionMatrix(as.factor(predRes_df1$predO30TeamBatFirstWinMod), 
-                                  as.factor(predRes_df1$actualTeamBatFirstWin)))
-confMatrix_O35 <- suppressWarnings(confusionMatrix(as.factor(predRes_df1$predO35TeamBatFirstWinMod), 
-                                  as.factor(predRes_df1$actualTeamBatFirstWin)))
 
-            print (confMatrix_O20, printStats = FALSE)            
+confMatrix_O0  <- confusionMatrix(as.factor(predRes_df1$predO0TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O20 <- confusionMatrix(as.factor(predRes_df1$predO20TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O26 <- confusionMatrix(as.factor(predRes_df1$predO26TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O30 <- confusionMatrix(as.factor(predRes_df1$predO30TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O35 <- confusionMatrix(as.factor(predRes_df1$predO35TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+                  # Since confusionMatrix output is a list, we can access the results:
+accuracy0Over  <- round(confMatrix_O0$overall[1]  *100, 0)
+accuracy20Over <- round(confMatrix_O20$overall[1] *100, 0)
+accuracy26Over <- round(confMatrix_O26$overall[1] *100, 0)
+accuracy30Over <- round(confMatrix_O30$overall[1] *100, 0)
+accuracy35Over <- round(confMatrix_O35$overall[1] *100, 0)
+
+paste ("Winner Prediction Right After Toss: Accuracy is", accuracy0Over, "%")            
+            print (confMatrix_O0, printStats = FALSE) 
+paste ("Winner Prediction after 20 Overs: Accuracy is", accuracy20Over, "%")            
+            print (confMatrix_O20, printStats = FALSE) 
+paste ("Winner Prediction after 26 Overs: Accuracy is", accuracy26Over, "%")
             print (confMatrix_O26, printStats = FALSE)
+paste ("Winner Prediction after 30 Overs: Accuracy is", accuracy30Over, "%")
             print (confMatrix_O30, printStats = FALSE)
+paste ("Winner Prediction after 35 Overs: Accuracy is", accuracy35Over, "%")
             print (confMatrix_O35, printStats = FALSE)
 
-# write out the predictions for EOI Runs and winners to a csv file: 
-
+            # write out the predictions for EOI Runs and winners to a csv file: 
 write.csv(predRes_df, "MatchByMatchResultPredictionsIPL.csv")
-write.csv(predResSumm_df, "SummarizedResultPredictionsIPL.csv")
+if (runType == "FinalTest") {
+  write.csv(predResSumm_df, "SummarizedResultPredictionsTestData2018IPL.csv")
+} else {
+  write.csv(predResSumm_df, "SummarizedResultPredictionsIPL.csv")
+}
   
 
 

@@ -217,8 +217,12 @@ matDetOverStats <- matDetOverStats %>%
           ) %>%
   filter(Innings_No == 1) %>%   ## Keep only 1 row per match; each row is now self-contained for a match
   filter (Inn1EOIOvers >12 & Inn2EOIOvers > 12) %>%  ## Do not want shortened matches where teams do not play 12 overs each
+  mutate(BatFirstWonLastMat = 0, BatSecondWonLastMat = 0, 
+         BatFirstWinsInLast3Mat = 0, BatSecondWinsInLast3Mat = 0,
+         BatFirstWinsInLast5Mat = 0, BatSecondWinsInLast5Mat = 0) %>%
   select(Season, Match_id, BatFirst:venueCity, interactionCurrTeams, interactionVenueBatTeam, 
          Inn1EOIOvers, Inn1EOIRuns, Inn1EOIWkts, Inn2EOIOvers, Inn2EOIRuns, Inn2EOIWkts, 
+         BatFirstWonLastMat:BatSecondWinsInLast5Mat,
          Over1Runs:Over40Wkts) %>%
   arrange(Season, Match_id)
 

@@ -13,9 +13,9 @@ setwd(filesDir)
     # Read *Match.csv which has summary of each match played: opponents, venue, match result
 matSumm2018 <- read.csv(file= 'ipl2018Match_raw.csv', header = TRUE, sep = ",")
 matSumm2018 <- matSumm2018[order(matSumm2018$id),]
-    # select only the knock-out matches from season 2018 (4 in total) from both files;
+    # select only the  matches from season 2018 from both files;
     # also select only needed columns:
-matSumm2018 <- matSumm2018 %>% filter (between (id, 7950,7953) ) %>% # only the 4 knockout matches
+matSumm2018 <- matSumm2018 %>% filter (between (season, 2018, 2018) ) %>% # only the 4 knockout matches
   select(Season = season, Match_id = id, BatFirst = team1, BatSecond = team2,
          toss = toss_winner, winner = winner, 
          #TeamBattingWon = as.character(BatFirst) == as.character(winner),
@@ -30,10 +30,12 @@ matDet2018 <- read.csv(file = 'ipl2018deliveries_raw.csv', header = TRUE, sep = 
 matDet2018 <- matDet2018[order(matDet2018$match_id),]
     # Now work with matDet2018 to filter rows to only these 4 knockout matches, and also to 
     # get cumulative totals at the end of each over
-matDet2018 <- matDet2018 %>% filter ((between (match_id, 7950,7953))  &   # only the 4 knockout matches
-                                       inning <= 2) %>% filter (inning <= 2) %>%   # Only Innings 1 and 2 (not tie-breaker innings)
-  select(TeamNameBat = batting_team, Match_id = match_id, TeamNameBowl = bowling_team,
-         inning, over, ball, total_runs, dismissal_kind) %>%
+matDet2018 <- matDet2018 %>% filter (inning <= 2) %>%   # Only Innings 1 and 2 (not tie-breaker innings)
+  select(Match_id = match_id, inning, over, ball, total_runs, dismissal_kind) %>%
+  inner_join(matSumm2018, by = c("Match_id" = "Match_id")) %>%
+  select (Season, Match_id, BatFirst, BatSecond, toss, winner, TeamBattingFirstWon,
+          venueGround, venueCity, interactionCurrTeams, interactionVenueBatTeam,
+          inning, over, ball, total_runs, dismissal_kind) %>%
   group_by(Match_id, inning) %>%  # Add up the wickets lost by over
   mutate (cumOver = (over - 1) + 
             round(ifelse (ball > 6, 0.0, (ball %% 6) / 6), 2) +   # If an over had extra balls, count them as 6 balls
@@ -145,13 +147,16 @@ matDet2018 <- matDet2018 %>%
           Over39Runs = ifelse(max(Over39Runs,na.rm=TRUE) >=0, max(Over39Runs,na.rm=TRUE), -1), 
           Over39Wkts = ifelse(max(Over39Wkts,na.rm=TRUE) >=0, max(Over39Wkts,na.rm=TRUE), -1), 
           Over40Runs = ifelse(max(Over40Runs,na.rm=TRUE) >=0, max(Over40Runs,na.rm=TRUE), -1), 
-          Over40Wkts = ifelse(max(Over40Wkts,na.rm=TRUE) >=0, max(Over40Wkts,na.rm=TRUE), -1) 
+          Over40Wkts = ifelse(max(Over40Wkts,na.rm=TRUE) >=0, max(Over40Wkts,na.rm=TRUE), -1),
+          BatFirstWonLastMat = 0, BatSecondWonLastMat = 0, 
+          BatFirstWinsInLast3Mat = 0, BatSecondWinsInLast3Mat = 0,
+          BatFirstWinsInLast5Mat = 0, BatSecondWinsInLast5Mat = 0
   ) %>% 
   group_by(Match_id) %>% filter (over == min(over)) %>%
-  left_join(matSumm2018, by = c("Match_id" = "Match_id")) %>%
   select (Season, Match_id, BatFirst, BatSecond, toss, winner, TeamBattingFirstWon,
           venueGround, venueCity, interactionCurrTeams, interactionVenueBatTeam,
           Inn1EOIOvers, Inn1EOIRuns, Inn1EOIWkts, Inn2EOIOvers, Inn2EOIRuns, Inn2EOIWkts, 
+          BatFirstWonLastMat:BatSecondWinsInLast5Mat,
           Over1Runs, Over1Wkts,  Over2Runs, Over2Wkts,  Over3Runs, Over3Wkts, 
           Over4Runs, Over4Wkts, Over5Runs, Over5Wkts, Over6Runs, Over6Wkts, 
           Over7Runs, Over7Wkts, Over8Runs, Over8Wkts, Over9Runs, Over9Wkts, 
