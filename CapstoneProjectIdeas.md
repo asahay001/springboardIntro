@@ -20,6 +20,8 @@ Ball-by-ball data for IPL T20 cricket is available from 2008 through 2017. Its p
 
 While this will be the training data, the test data wil be a dat set for 2018 matches which will come from a different [source](https://www.kaggle.com/nowke9/ipldata). 
 
+Each year there are about 60 matches played between 10 or so teams at different venues and pitches. SO there are over 600 matches to analyze data from. 
+
 ## Data Manipulations
 Some data wrangling would be necessary for this project. e.g. joining across the 4 files; summing the scores at the end of each over for each match for each innings; determining who won the last match between two oppnents, who won the last 3, and who won the last 5, since that history may have an influence on the current match between two teams; or calculating the strike rate and economy rate and computing and adding the 2-3 match winning performes for each match to the match file. 
 Since 2018 Test data is from a different data source, wrangling will be done to transofrm this data set to the format prepared for the Training Data. 
