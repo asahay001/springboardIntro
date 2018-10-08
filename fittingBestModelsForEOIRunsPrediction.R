@@ -46,14 +46,15 @@ createMatchDataSlice_fun <- function (dataFrame = matSummDet, minSeason, maxSeas
 
 
 modelAICbestFitEOI_fn <- function (over, matSummTrng) {
-  prevWinsDepVar <- "BatFirstWonLastMat+BatSecondWonLastMat+BatFirstWinsInLast3Mat+BatSecondWinsInLast3Mat+BatFirstWinsInLast5Mat+BatSecondWinsInLast5Mat"
-  incrementalDepVar6  <- "interactionCurrTeams+interactionVenueBatTeam+Over1Runs+Over1Wkts+Over2Runs+Over2Wkts+Over3Runs+Over3Wkts+Over4Runs+Over4Wkts+Over5Runs+Over5Wkts+Over6Runs+Over6Wkts"
-  incrementalDepVar10 <- "Over7Runs+Over7Wkts+Over8Runs+Over8Wkts+Over9Runs+Over9Wkts+Over10Runs+Over10Wkts"
-  incrementalDepVar15 <- "Over11Runs+Over11Wkts+Over12Runs+Over12Wkts+Over13Runs+Over13Wkts+Over14Runs+Over14Wkts+Over15Runs+Over15Wkts"
   
-  incrementalDepVar26 <- "Inn1EOIRuns+Over21Runs+Over21Wkts+Over22Runs+Over22Wkts+Over23Runs+Over23Wkts+Over24Runs+Over24Wkts+Over25Runs+Over25Wkts+Over26Runs+Over26Wkts"
-  incrementalDepVar30 <- "Over27Runs+Over27Wkts+Over28Runs+Over28Wkts+Over29Runs+Over29Wkts+Over30Runs+Over30Wkts"
-  incrementalDepVar35 <- "Over31Runs+Over31Wkts+Over32Runs+Over32Wkts+Over33Runs+Over33Wkts+Over34Runs+Over34Wkts+Over35Runs+Over35Wkts"
+  prevWinsDepVar      <- "BatFirstWinsInLast5Mat"
+  incrementalDepVar6  <- "Over3Runs+Over3Wkts+Over5Runs+Over5Wkts+Over6Runs+Over6Wkts"
+  incrementalDepVar10 <- "Over9Runs+Over9Wkts+Over10Runs+Over10Wkts"
+  incrementalDepVar15 <- "Over13Runs+Over13Wkts+Over14Runs+Over14Wkts+Over15Runs+Over15Wkts"
+  
+  incrementalDepVar26 <- "Inn1EOIRuns+Over23Runs+Over23Wkts+Over25Runs+Over25Wkts+Over26Runs+Over26Wkts"
+  incrementalDepVar30 <- "Over29Runs+Over29Wkts+Over30Runs+Over30Wkts"
+  incrementalDepVar35 <- "Over33Runs+Over33Wkts+Over34Runs+Over34Wkts+Over35Runs+Over35Wkts"
   
   IndVar <- ifelse(over <= 20, "Inn1EOIRuns", "Inn2EOIRuns")
   
@@ -76,16 +77,14 @@ modelAICbestFitEOI_fn <- function (over, matSummTrng) {
   )
   formula_base <-paste (IndVar, "~1")
   formula_full <- paste (IndVar, "~", fullDepVar)
-  null=lm(formula_base, data=matSummTrng)
-  full=lm(formula_full, data=matSummTrng)
+  null=lm(formula_base, data = matSummTrng )
+  full=lm(formula_full, data = matSummTrng )
   stepRes <- step(null, scope = list( upper=full, lower=~1 ), direction = "both", trace=FALSE)
+  
   lmFormulaLowestAIC <- as.formula(stepRes$call)
   modelNamelowestAIC <- lm(lmFormulaLowestAIC, data = matSummTrng)
         ## stepRes$anova[6]  # stores the AIC values
-        ### Using leaps() to determine the predictors for the highest adjusted R square:
-        #leapsResOv6 = leaps(x= matSummTrng[,19:30], y = matSummTrng[,"Inn1EOIRuns"],
-                            # names = names(matSummTrng)[19:30], method = "adjr2")
-        #leapsResOv6$which[which.max(leapsResOv6$adjr2),] # shows the relevant predictors with the highest adjusted R square
+       
   return (modelNamelowestAIC)  # will be used to predict EOI Runs
 }  # end of create function: modelAICbestFitEOI_fn
 
@@ -95,35 +94,45 @@ modelAICbestFitEOI_fn <- function (over, matSummTrng) {
 
 predictWinner_fn <- function (over = 0, matSummTrng) {
   
-  prevWinsDepVar <- "BatFirstWonLastMat+BatSecondWonLastMat+BatFirstWinsInLast3Mat+BatSecondWinsInLast3Mat+BatFirstWinsInLast5Mat+BatSecondWinsInLast5Mat"                                              
+  #prevWinsDepVar <- "BatFirstWonLastMat+BatSecondWonLastMat+BatFirstWinsInLast3Mat+BatSecondWinsInLast3Mat+BatFirstWinsInLast5Mat+BatSecondWinsInLast5Mat"                                              
+  #IndVar <-    "TeamBattingFirstWon"   ## check if the team that batted 1st won 
+  #commonVar <- "Inn1EOIOvers+Inn1EOIWkts+Inn1EOIRuns+toss+venueCity+BatFirst+BatSecond+interactionCurrTeams+interactionVenueBatTeam"
+  #overVar0  <- "toss+BatFirst+BatSecond+venueCity+interactionCurrTeams+interactionVenueBatTeam+Season"
+  #overVar20 <- "Over6Runs+Over6Wkts+Over9Runs+Over9Wkts+Over10Runs+Over10Wkts+Over12Runs+Over12Wkts+Over15Runs+Over15Wkts+Over18Runs+Over18Wkts+Over19Runs+Over19Wkts"
+  #overVar26 <- "Over26Runs+Over26Wkts+Over25Runs+Over25Wkts+Over24Runs+Over24Wkts+Over23Runs+Over23Wkts"
+  #overVar30 <- "Over30Runs+Over30Wkts+Over29Runs+Over29Wkts+Over28Runs+Over28Wkts+Over27Runs+Over27Wkts"
+  #overVar35 <- "Over35Runs+Over35Wkts+Over34Runs+Over34Wkts+Over33Runs+Over33Wkts+Over32Runs+Over32Wkts+Over31Runs+Over31Wkts"
+  
+  prevWinsDepVar <- "BatFirstWonLastMat+BatFirstWinsInLast3Mat+BatFirstWinsInLast5Mat"                                              
   IndVar <-    "TeamBattingFirstWon"   ## check if the team that batted 1st won 
-  commonVar <- "Inn1EOIOvers+Inn1EOIWkts+Inn1EOIRuns+toss+venueCity+BatFirst+BatSecond+interactionCurrTeams+interactionVenueBatTeam"
-  overVar0  <- "toss+BatFirst+BatSecond+venueCity+interactionCurrTeams+interactionVenueBatTeam+Season"
-  overVar20 <- "Over6Runs+Over6Wkts+Over9Runs+Over9Wkts+Over10Runs+Over10Wkts+Over12Runs+Over12Wkts+Over15Runs+Over15Wkts+Over18Runs+Over18Wkts+Over19Runs+Over19Wkts"
-  overVar26 <- "Over26Runs+Over26Wkts+Over25Runs+Over25Wkts+Over24Runs+Over24Wkts+Over23Runs+Over23Wkts"
-  overVar30 <- "Over30Runs+Over30Wkts+Over29Runs+Over29Wkts+Over28Runs+Over28Wkts+Over27Runs+Over27Wkts"
-  overVar35 <- "Over35Runs+Over35Wkts+Over34Runs+Over34Wkts+Over33Runs+Over33Wkts+Over32Runs+Over32Wkts+Over31Runs+Over31Wkts"
+  commonVar <- "Inn1EOIRuns+toss+venueCity+BatFirst+BatSecond"
+  overVar0  <- "toss+BatFirst+BatSecond+venueCity"
+  overVar20 <- "Over6Runs+Over6Wkts+Over10Runs+Over15Runs+Over15Wkts+Inn1EOIRuns+toss+venueCity+BatFirst+BatSecond"
+  overVar26 <- "Over26Runs+Over26Wkts+Over25Runs+Over25Wkts+Over23Runs+BatSecond"
+  overVar30 <- "Over30Runs+Over30Wkts+Over28Runs+Over28Wkts+Over27Runs"
+  overVar35 <- "Over35Runs+Over35Wkts+Over34Runs+Over32Runs+Over32Wkts+Over31Runs"
+  
   over0DepVar  <- paste(prevWinsDepVar, "+", overVar0)  # winner prediction right after toss before a ball is bowled
-  over20DepVar <- paste(prevWinsDepVar, "+", overVar20, "+", commonVar)
-  over26DepVar <- paste(overVar26, "+", over20DepVar)
-  over30DepVar <- paste(overVar30, "+", over26DepVar)
-  over35DepVar <- paste(overVar35, "+", over30DepVar)
+  #over20DepVar <- paste(overVar20, "+", prevWinsDepVar, "+",  commonVar)
+  #over26DepVar <- paste(overVar26, "+", "BatFirstWinsInLast5Mat", "+", "Inn1EOIRuns")
+  #over30DepVar <- paste(overVar30, "+", "BatFirstWinsInLast5Mat", "+", "Inn1EOIRuns")
+  over35DepVar <- paste(overVar35, "+", "BatFirstWinsInLast5Mat", "+", "Inn1EOIRuns")
   
   DepVar <- case_when(
     over ==  0 ~ over0DepVar, 
-    over == 20 ~ over20DepVar,
-    over == 26 ~ over26DepVar,
-    over == 30 ~ over30DepVar,
+    over == 20 ~ overVar20,
+    over == 26 ~ overVar26,
+    over == 30 ~ overVar30,
     over == 35 ~ over35DepVar
   )
-  formula_full <- paste(IndVar, "~", DepVar, sep = " ")
-  formula_base <-paste (IndVar, "~1")
-  null=lm(formula_base, data=matSummTrng)
-  full=lm(formula_full, data=matSummTrng)
-  stepRes <- step(null, scope = list( upper=full, lower=~1 ), direction = "both", trace=FALSE)
+  formula_full <- paste (IndVar, "~", DepVar, sep = " ")
+  formula_base <- paste (IndVar, "~1")
+  null = lm(formula_base, data = matSummTrng)
+  full = lm(formula_full, data=matSummTrng)
+  stepRes <- step(null, scope = list( upper=full, lower = ~1 ), direction = "both", trace=FALSE)
   lmFormulaLowestAIC <- as.formula(stepRes$call)
   modelNamelowestAIC <- lm(lmFormulaLowestAIC, data = matSummTrng)
-  
+        #print(stepRes$anova[6])
   return(modelNamelowestAIC)
 }   # End of create predictWinner_fn
 
@@ -209,3 +218,4 @@ updateRecentWinsInDataSet_fn <- function(matSummTrng) {
 
 
 ##################### All Functions Created Above ##########################################
+

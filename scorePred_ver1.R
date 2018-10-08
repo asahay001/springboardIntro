@@ -226,6 +226,9 @@ matDetOverStats <- matDetOverStats %>%
          Over1Runs:Over40Wkts) %>%
   arrange(Season, Match_id)
 
+# Update with recent winners between 2 teams from the most recent matches
+matDetOverStats = updateRecentWinsInDataSet_fn (matDetOverStats)
+
 #Finally write the new match summary data frame to a csv file so that we can do exploration and then create predictive model
 #writing to current working directory which is defined in the variable filesDir
 write.csv (matDetOverStats, "wrangled_matchSummaryDataIPL.csv")
