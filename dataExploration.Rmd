@@ -12,36 +12,49 @@ library("dplyr")
 library("ggplot2")
 filesDir <- "C:\\work\\dataScience\\springboard\\springboardIntro"
 setwd(filesDir)
-matSumm <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep = ",")
+matSumm <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep = ",",
+                    stringsAsFactors = FALSE)
+matDet <- read.csv(file= "wrangled_ballByBallDataIPL.csv", header = TRUE, sep = ",",
+                    stringsAsFactors = FALSE)
 #knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Data Exploration
+# Milestone Report: Data Exploration
 
-1. My goal for the project is to be able to predict a) the match winner, and b) approximate runs each team will score in the match. The prediction will happen while a match is in progress, at the end of specific overs: for final score of each team, the prediction will be at the end of 6th over (= end of powerplay), and at the end of 10th and 15th overs respctively of each team's batting. Each match winner will be predicted right at the start of the match after the toss, then at the end of Innings 1 before the 2nd team starts its batting, and then at the end of the 26th over, 30th over and 35th overs of the match (which are the same as at the end of 6th, 10th and 15th over of the 2nd innings). 
+## Project Background
+1. The goal for this project is to be able to predict for each IPL20 cricket match: a) the match winner, and b) approximate runs the two teams will score in the match. The prediction will happen while a match is in progress, at the end of specific overs: for final score of each team, the prediction will be at the end of 6th over (= end of powerplay), and at the end of 10th and 15th overs respctively of each team's batting. Each match winner will be predicted right at the start of the match after the toss, then at the end of Innings 1 before the 2nd team starts its batting, and then at the end of the 26th over, 30th over and 35th overs of the match (which are the same as at the end of 6th, 10th and 15th over of the 2nd innings). 
 So while it may be tempting to explore if such milestones have an impact on the prediction, like in which over does a team reaches its 50th or 100th run, or does it matter how soon a team loses its first 4 or 5 batsmen (typically your frontline batsmen), I cannot consider these parameters directly since we dont know beforehand in which over these may happen. So instead I will explore parameters relevant at the start of the match, and then at the end of the specific overs mentioned above. I have to remember that since the predictions are for a live martch, the training data needs to be explored in that context: when I predict at the end of the 6th over, I will explore data only  till the 6th over of innings of previous matches for independent variables; when prediction happens at the end of 10th over, I wil explore data up till the end of 10th over of previous matches. For the 2 dependent variables mentioned above, the independent variables that spring to mind are: 
 a) Winner of the most recent previous match between the two teams playing this current match (*who is playng who*)
 b) Who has won how many times in their most recent last 3 encounters, and in the last 5 encounters (assuming the team with recent wins agains the same oppostion has an edge in the current ongoing match)
-c) where the current match is being played: some teams perform better at certain venues, and also the ground conditions at certain venues may be more amenable to batting, and at some other venues to bowling, meaning teams are likley to post a higher socre in the 1st scenario and a lower score in the 2nd scenario than the average scores (*so who is playing, and where*)
-d) Do a significant number of toss winners end up winning the match
-e) Similarly, does the data show if it is advantageous t bat forst or to bowl first, or it does not matter
-f) runs scored at the end of various overs, the thought being that the prediction will be better deep into a team's batting innings: the higher the number of overs batted, the more accurate the final score prediction
+c) where the current match is being played: some teams perform better at certain venues, and also the ground conditions at certain venues may be more amenable to batting, and at some other venues to bowling, meaning teams are likley to post a higher socre in the 1st scenario and a lower score in the 2nd scenario than the average scores ( so *who is playing, and where*)
+d) Does the psychological advantage of winning the toss at the start of a match (to elect if you want to bat first or bat second) translate to a significant probability of winning the match 
+e) Similarly, regardless of winning the toss, does the data show if it is advantageous to bat first or to bowl first, or it does not matter
+f) runs scored at the end of various overs; the thought being that the prediction will be better deep into a team's batting innings: the higher the number of overs batted, the more accurate the final score prediction
 g) Impact of how many runs were scored and how many wickets were lost in the initial overs: 1st 4 overs, 1st 6 overs, 1st 8 overs and 1st 10 overs (half way mark) of each innings. The hypothesis is that if a team loses early wickets, it may not score that many runs by the end, and also if it scores slowly in the beginning (fewer runs in the initial overs), it may be difficult to post a big total at the end of its innings (EOI).
 
+### Caveat
 I am ignoring the effects of current weather conditions or if a match is the finals of aseason's tournament, both of which can deviate scores from the norm. I am also ignoring matches that were shortened (< 12 overs each) either due to weather or due to a team collapsing thereby having a quick match decision. 
 
+## Feature Engineering:
+Data exploration is performed on a wrangled data file, read into R as a data frame: each row represents relevant details of each match. The data files are in my github folder: https://github.com/asahay001/springboardIntro   File name: wrangled_matchSummaryDataIPL.csv
 
-2. To explore the impact of variables on the final score by a team, I have used: a) Box plots b) Histograms and frequency polygon c) Smooth line using lm method d) Facet wraps 
+1. New columns created for data exploration and liner regression models: 
+    * Does the team batting first win the match: True/False
+    * Summary Scenarios at end of each over, 1 through the end of each innings
+    * Matches won by each team i nthe data set
+    * Win Percentage of each team (Matches Won / Matches Played) in the dataset
+    * Result of prior matches between two teams: who won the most recent previous match, last 3, and last 5
+2. Ball-by-ball detail rows were summarized into columns, since score prediction is at end of overs. This resulted in `r nrow(matDet)` detail, ball-by-ball rows in the 2008-2017 dataset to be summarized to `r nrow(matSumm)` rows. 
 
-3. Data exploration is performed on a wrangled data file, read into R as a data frame: each row represents relevant details of each match. The data files are in my github folder: https://github.com/asahay001/springboardIntro   File name: wrangled_matchSummaryDataIPL.csv
+## Data Exploration
+Have used two approaches to understand the IPL data:
+a) Correlation among various independent and dependent variables
+b) Plots of variables to see if trends exist
+ 
+### Correlations among variables
 
-4. I have saved the plots in plots.pdf file for you to see. All my files are in the following github directory: https://github.com/asahay001/springboardIntro The R file to produce the plots is called dataExploreMatchScorePrediction.R 
-
-5. Plots show a strong correlation between wickets lost early on (1st 6 overs) with the final score posted by a team. 
-
-6. Running a correlation fucntion for the over stats (independent variables) against the indepenent variable, *Runs Scored By A Team in an innings* shows correlation with EOI Runs (End of the Innings score) is higher as the number of overs played increases; 
-*Runs scored* has a *positive correlation with EOI Runs* and *Wickets lost* has a *negative impact* on the End of Innings score:
-```{r }
+1. Running a correlation fucntion for the Over stats (independent variables) against the depenent variable, *Runs Scored By A Team in an innings* shows that correlation with EOI Runs (End of the Innings score) is higher as the number of overs played increases. Also, *Runs scored* has a *positive correlation with EOI Runs*, while *Wickets lost* has a *negative impact* on the End of Innings score:
+```{r CorelationsFinalScore, echo=FALSE, warning=FALSE}
 cor(na.omit(subset(matSumm, na.rm = TRUE, 
                 select = c("Inn1EOIRuns", "Over2Runs", "Over2Wkts","Over3Runs", "Over3Wkts", 
                             "Over4Runs", "Over4Wkts", "Over5Runs", "Over5Wkts",
@@ -49,35 +62,218 @@ cor(na.omit(subset(matSumm, na.rm = TRUE,
 
 ```
 
-Next, checking the correlation between a team winning a current match with matches won against that same opponent recently, shows that the *last match result is not so consequential as the results over the last 5 matches*; in the result below, the code is checking for the performance of the team that is batting first in this current match with its past results against the same team:
-```{r}
+2. Next, checking the correlation between a team winning a current match with matches won against that same opponent recently, shows that the *last match result is not so consequential as a winning streak against the same opponent over the last 5 matches*. In the result below, the code is checking for the performance of the team that is batting first in this current match with its past results against the same team:
+```{r CorrelationsMatchWinnerFoe, echo=FALSE, warning=FALSE}
 matSumm_cor2 <- na.omit(subset(matSumm, na.rm = TRUE, 
                                select = c("TeamBattingFirstWon", "BatFirstWonLastMat", 
                                           "BatFirstWinsInLast3Mat", "BatFirstWinsInLast5Mat" )))
 cor(matSumm_cor2)
 ```
+3. Finally, checking the correlation between a) a team batting first winning its current match, b) its wining percentage record against all teams, c) and the winning percentage record of its opponent (theteam that will bat second in this match), shows *a weak correlation with the past records*, again confirming that each match is decided on how well the team plays on that given day:
 
-
-
-## Feature Engineering:
-1. New columns created for data exploration and liner regression models: TeamBatWinner True/False), summary Scenarios at end of 4, 6, 8,10, 12, 15 overs; 6 overs has aspecial significance: PowerPlay; for Overs rounded correctly to 1 decimal place, from Over-Ball data (an over is 6 legal balls, so 2 over and 3 balls means 2.5 overs for plotting, not 2.3 as in cricket parlance)
-2. Ball-by-ball detail rows were summarized into rows by innings, since score prediction is by innings
-
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r CorrelationsMatchWinnerAll, echo=FALSE, warning=FALSE}
+matSumm_cor4 <- na.omit(subset(matSumm, na.rm = TRUE, 
+                               select = c("TeamBattingFirstWon", "BatFirstMatchesWon", 
+                                          "BatFirstWinPercentage", "BatSecondMatchesWon",
+                                          "BatSecondWinPercentage")))
+cor(matSumm_cor4)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+## Plotting the data
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+I have saved the plots in plots.pdf file in the following github directory: https://github.com/asahay001/springboardIntro. The R file to produce the plots is called dataExploreMatchScorePrediction.R 
+
+1. First, let's explore *variation within* the 2 *dependent variables*, one at a time: 
+      a) match winners, and 
+      b) runs scored in each innings
+
+ a) Match Winners: 
+
+```{r MatchesWon, echo=FALSE, warning=FALSE}
+summary_df1 <- matSumm %>% group_by(winner) %>% summarize(MatchesWon = n())
+ggplot(mapping = aes(x = reorder(winner, MatchesWon), y = MatchesWon), data = summary_df1) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs( y= "Number of matches won", x = "IPL Teams", 
+    title = paste("Top 8 teams are close in terms of number of matches won"),
+                  subtitle = paste("    So we will examine the win percentage in the next graph"),
+                                   caption = "IPL20 Cricket Data 2008 - 2017"
+   )
+summary_df1 <- matSumm %>% select (BatFirst, BatFirstWinPercentage) %>% 
+  group_by(BatFirst) %>% arrange(BatFirstWinPercentage) %>% distinct()
+ggplot(mapping = aes(x = reorder(BatFirst, BatFirstWinPercentage), y = BatFirstWinPercentage), 
+       data = summary_df1) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(y= "Percentage of matches won", x = "IPL Teams",
+    title = paste("Top 4 teams have won more than 50% of their matches"),
+    subtitle = paste("  So matches tend to be fairly close"),
+    caption = "IPL20 Cricket Data 2008 - 2017"
+  )
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+ b) Runs scored (also called End Of Innings Score):
+ 
+```{r RunsScored, echo=FALSE, warning=FALSE}
+ggplot(data = matSumm) +
+  geom_histogram(mapping = aes(x = Inn1EOIRuns), binwidth = 2) +
+  labs(x= "Final Score in an Innings", y = "Count",
+       title = paste("Runs scored have a normal distribution"),
+       subtitle = paste("  Just a couple of outliers at either end"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+``` 
+ 
+2. Next look at the *covariations between variables*, from two perspectives:
+  a) At the start of the match before a ball is bowled
+  b) During the match as overs progress, runs are scored, and wickets are lost
+  
+  a) At the start of match, let's examine if the match winner is significantly dependent on:
+      i) the venue where the match is being played, 
+     ii) the psychological advantage of winning the toss and electing to bat first or second in the match,
+    iii) past results
+    
+    Effect of Venue / ground on final score:
+```{r BeforeMatchStartVenue, echo=FALSE, warning=FALSE}
+ggplot(data = matSumm) +
+  geom_histogram(mapping = aes(x = Inn1EOIRuns), binwidth = 0.5) +
+  facet_wrap(~venueCity, nrow = 6) +
+  labs(x= "Final Score in an Innings", y = "Count",
+       title = paste("Each venue seems to have some high and some low scores, and some in between"),
+       subtitle = paste("  So next look at the median distribution to confirm"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+
+ggplot(matSumm) +
+  geom_boxplot(aes(
+    x = reorder(venueCity, Inn1EOIRuns, FUN = median),
+    y = Inn1EOIRuns)) +
+  coord_flip() +
+  labs(x= "Final Score in an Innings", y = "Venue",
+       title = paste("High inter-quartile means venue may not be a big contributor"),
+       subtitle = paste("  The outliers, Mohali and the South African grounds have very few matches"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+``` 
+  Effect of Toss on ultimately winning the match:
+```{r BeforeMatchStartToss, echo=FALSE, warning=FALSE}
+ggplot (data = matSumm) +
+  geom_bar(mapping = aes (x= toss, fill = (toss == winner)),
+           position = "fill") +
+  coord_flip()  +
+  labs(x= "Toss Winner", y = "% that the toss winner wins the match",
+       title = paste("40-60% win record after winning toss "),
+       subtitle = paste("Does not appear that winning the toss is significant"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+
+ggplot (data = matSumm) +
+  geom_bar(mapping = aes (x= toss, fill = (toss == winner))) +
+  coord_flip() +
+  labs(x= "Toss Winner", y = "Number of times the toss winner wins the match",
+       title = paste("Teams dont win often enough despite winning the toss"),
+       subtitle = paste("Toss can safely be discarded as an influencer to winning matches"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+
+```
+  
+  Significance of Past match Results between today's two teams:
+```{r BeforeMatchStartPastResult, echo=FALSE, warning=FALSE}
+ggplot(mapping = aes(x = BatFirstWonLastMat, fill = TeamBattingFirstWon)) +
+  geom_bar (data = matSumm, position = "fill") +
+  labs(x= "Did Team A win the last match between the two", 
+       y = "Likley % that Team A will win today ",
+       title = paste("Team that won last match has just over 50% chnace of winning today"),
+       subtitle = paste("Team that lost the last match has 60% chance of losing today"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+ggplot(mapping = aes(x = BatFirstWinsInLast3Mat, fill = TeamBattingFirstWon)) +
+  geom_bar (data = matSumm, position = "fill") +
+  labs(x= "Count Team A has won last 3 matches between the two", 
+       y = "Likley % that Team A will win today ",
+       title = paste("Even if you have lost the last 3 matches..."),
+       subtitle = paste("...you have 30% chance of winning today against the same opponent"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+ggplot(mapping = aes(x = BatFirstWinsInLast5Mat, fill = TeamBattingFirstWon)) +
+  geom_bar (data = matSumm, position = "fill") +
+  labs(x= "Times Team A has won the last 5 matches between the two", 
+       y = "Likley % that Team A will win today ",
+       title = paste("Your chances of winning today are much better if..."),
+       subtitle = paste("...you have won more of your reccent matches against this opponent"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+
+```  
+ 
+ 2b. Now let's plot the final scores against runs scored and wickets lost during the match, specifically at the end of 6th, 10th and 15th overs; first effect of runs scored (continuous variable), and then wickets lost till those overs:
+ 
+```{r DuringMatch_Runs, echo=FALSE, warning=FALSE}
+ggplot(mapping = aes(x=Over6Runs, y = Inn1EOIRuns), data = matSumm) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x= "Runs scored at the end of 6 overs", 
+       y = "Final score (End of Innings)",
+       title = paste("The higher your score is at Over 6, the higher your final score"),
+       subtitle = paste("  But there is significant scatter outside the trend line"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+
+# Continue plotting as we get deeper into an innings (predictions at th eend of 6th, 10th and 15th overs)  
+ggplot(mapping = aes(x=Over10Runs, y = Inn1EOIRuns), data = matSumm) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x= "Runs scored at the end of 10 overs", 
+       y = "Final score (End of Innings)",
+       title = paste("Deeper into an innings, the trend line is sharper"),
+       subtitle = paste("  Definite positive correlation, with less outliers"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+ggplot(mapping = aes(x=Over15Runs, y = Inn1EOIRuns), data = matSumm) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x= "Runs scored at the end of 15 overs", 
+       y = "Final score (End of Innings)",
+       title = paste("Strong positive correlation deep into an innings"),
+       subtitle = paste("  Points are grouped much closer to the model line"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+
+```   
+ 
+ Finally let's examine the plot for wickets lost at the end of 6th, 10th and 15th overs. We look at the covariation between 2 continuous variables by binning one of the 2 continuous variables (Wickets Lost):
+ 
+```{r DuringMatch_Wkts, echo=FALSE, warning=FALSE}
+ggplot(data = matSumm, mapping = aes(x = Over6Wkts, y = Inn1EOIRuns)) +
+  geom_boxplot(mapping = aes(group = cut_width(Over6Wkts, 1)), varwidth = TRUE) +
+  labs(x= "Wickets Lost at the end of 6 overs", 
+       y = "Final score (End of Innings)",
+       title = paste("The more wickets you lose, the less your final score"),
+       subtitle = paste("  Recovering to a 'good' score after losing 3 or more wickets seems difficult"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+ggplot(data = matSumm, mapping = aes(x = Over10Wkts, y = Inn1EOIRuns)) +
+  geom_boxplot(mapping = aes(group = cut_width(Over10Wkts, 1)), varwidth = TRUE) +
+  labs(x= "Wickets Lost at the end of 10 overs", 
+       y = "Final score (End of Innings)",
+       title = paste("Teams that preserve wickets seem to score more"),
+       subtitle = paste("  Recovering to a 'good' score after losing 5 or more wickets seems difficult"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+ggplot(data = matSumm, mapping = aes(x = Over15Wkts, y = Inn1EOIRuns)) +
+  geom_boxplot(mapping = aes(group = cut_width(Over15Wkts, 1)), varwidth = TRUE) +
+  labs(x= "Wickets Lost at the end of 15 overs", 
+       y = "Final score (End of Innings)",
+       title = paste("Deep into the innings"),
+       subtitle = paste(" Clearly shows the negative impact of wickets lost on final score"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+
+```   
+ 
+ 
+ 
+ 
+ 

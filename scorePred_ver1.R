@@ -15,15 +15,18 @@ setwd(filesDir)
 
     # Read Team.csv which has Team ID and Team Names. There are 13 teams that have played from 2008-2017 in IPL T20 tournament
     #teamss$Team_Name will have the names of the teams, while teams$Team_Id will have the IDs for cross-referencing across files
-teams <- read.csv(file= 'Team.csv', header = TRUE, sep = ",")
+teams <- read.csv(file= 'Team.csv', header = TRUE, sep = ",",
+                  stringsAsFactors = FALSE)
 
     # Read Match.csv which has summary of each match played: opponents, venue, runs scored by each team, match result
-matSumm <- read.csv(file= 'Match.csv', header = TRUE, sep = ",")
+matSumm <- read.csv(file= 'Match.csv', header = TRUE, sep = "," ,
+                    stringsAsFactors = FALSE)
 matSumm <- matSumm[order(matSumm$match_id),]
 
     # Finally read the details of each match from Ball_By_Ball.csv
 matDetFile <- "Ball_By_Ball.csv"
-matDet <- read.csv(file = matDetFile, header = TRUE, sep = ",")
+matDet <- read.csv(file = matDetFile, header = TRUE, sep = ",",
+                   stringsAsFactors = FALSE)
 
 
     # select only the needed columns, then sort, then find cumulative runs scored after each ball, and then further reduce columns no longer needed
@@ -182,15 +185,16 @@ matDetOverStats <- matDetOverStats %>% select ( -Ball_id, -Team_Bowling) %>%
   filter (Over_id == min(Over_id)) %>%
   mutate (EOIInnOvers = paste ("Inn", as.character(Innings_No), "EOIOvers", sep = ""),
           EOIInnRuns = paste ("Inn", as.character(Innings_No), "EOIRuns", sep = ""),
-          EOIInnWkts = paste ("Inn", as.character(Innings_No), "EOIWkts", sep = ""),
-          interactionCurrTeams = as.numeric(TeamNameBat) * as.numeric(TeamNameBowl), 
-          interactionVenueBatTeam = as.numeric(TeamNameBat) * as.numeric(venueCity) * 
-                                          as.numeric(TeamNameBowl)) %>%
+          EOIInnWkts = paste ("Inn", as.character(Innings_No), "EOIWkts", sep = "")
+          #, interactionCurrTeams = as.numeric(TeamNameBat) * as.numeric(TeamNameBowl), 
+          # interactionVenueBatTeam = as.numeric(TeamNameBat) * as.numeric(venueCity) * 
+                                          #as.numeric(TeamNameBowl)
+          ) %>%
   select (Season, Match_id, Innings_No, Over_id, 
           BatFirst = TeamNameBat, BatSecond = TeamNameBowl, toss, winner,
           TeamBattingFirstWon = TeamBattingWon, venueGround, venueCity, 
           EOIInnOvers:EOIInnWkts, EOIOver:EOIWkts, 
-          interactionCurrTeams, interactionVenueBatTeam,
+          #interactionCurrTeams, interactionVenueBatTeam,
           Over1Runs, Over1Wkts,  Over2Runs, Over2Wkts,  Over3Runs, Over3Wkts, 
           Over4Runs, Over4Wkts, Over5Runs, Over5Wkts, Over6Runs, Over6Wkts, 
           Over7Runs, Over7Wkts, Over8Runs, Over8Wkts, Over9Runs, Over9Wkts, 
@@ -220,14 +224,44 @@ matDetOverStats <- matDetOverStats %>%
   mutate(BatFirstWonLastMat = 0, BatSecondWonLastMat = 0, 
          BatFirstWinsInLast3Mat = 0, BatSecondWinsInLast3Mat = 0,
          BatFirstWinsInLast5Mat = 0, BatSecondWinsInLast5Mat = 0) %>%
-  select(Season, Match_id, BatFirst:venueCity, interactionCurrTeams, interactionVenueBatTeam, 
+  select(Season, Match_id, BatFirst:venueCity, 
+         #interactionCurrTeams, interactionVenueBatTeam, 
          Inn1EOIOvers, Inn1EOIRuns, Inn1EOIWkts, Inn2EOIOvers, Inn2EOIRuns, Inn2EOIWkts, 
          BatFirstWonLastMat:BatSecondWinsInLast5Mat,
          Over1Runs:Over40Wkts) %>%
   arrange(Season, Match_id)
 
-# Update with recent winners between 2 teams from the most recent matches
+# Let's clean out some data: 
+# matDetOverStats %>% group_by(BatFirst) %>% distinct(BatFirst) shows duplicates; let's rename to the latest name:
+# 1) Rising Pune Supergiant and Rising Pune Supergiants are the same team
+# 2) Similarly Deccan Chargers team was sold and was renamed Sunrisers Hyderabad
+matDetOverStats$toss <- ifelse(matDetOverStats$toss == "Rising Pune Supergiants", 
+                               "Rising Pune Supergiant", matDetOverStats$toss)
+matDetOverStats$winner <- ifelse(matDetOverStats$winner == "Rising Pune Supergiants", 
+                               "Rising Pune Supergiant", matDetOverStats$winner)
+matDetOverStats$BatFirst <- ifelse(matDetOverStats$BatFirst == "Rising Pune Supergiants", 
+                               "Rising Pune Supergiant", matDetOverStats$BatFirst)
+matDetOverStats$BatSecond <- ifelse(matDetOverStats$BatSecond == "Rising Pune Supergiants", 
+                                   "Rising Pune Supergiant", matDetOverStats$BatSecond)
+matDetOverStats$toss <- ifelse(matDetOverStats$toss == "Deccan Chargers", 
+                               "Sunrisers Hyderabad", matDetOverStats$toss)
+matDetOverStats$winner <- ifelse(matDetOverStats$winner == "Deccan Chargers", 
+                                 "Sunrisers Hyderabad", matDetOverStats$winner)
+matDetOverStats$BatFirst <- ifelse(matDetOverStats$BatFirst == "Deccan Chargers", 
+                                   "Sunrisers Hyderabad", matDetOverStats$BatFirst)
+matDetOverStats$BatSecond <- ifelse(matDetOverStats$BatSecond == "Deccan Chargers", 
+                                    "Sunrisers Hyderabad", matDetOverStats$BatSecond)
+# Also Bangalore and Bengaluru are really the same cities, with the same stadium/ground:
+# matDetOverStats %>% group_by(venueCity) %>% distinct(venueCity)
+matDetOverStats$venueCity <- ifelse(matDetOverStats$venueCity == "Bengaluru", 
+                                    "Bangalore", matDetOverStats$venueCity)
+
+# Add a few more columns for Feature Engineering, which mayhelp in better prediction models:
+# First, update with recent winners between 2 teams from the most recent matches (1, 3 and 5):
 matDetOverStats = updateRecentWinsInDataSet_fn (matDetOverStats)
+
+# Next create stats for matches played by each team and win percentage of the matches played:
+matDetOverStats = updateWinStats_fn (matDetOverStats)
 
 #Finally write the new match summary data frame to a csv file so that we can do exploration and then create predictive model
 #writing to current working directory which is defined in the variable filesDir

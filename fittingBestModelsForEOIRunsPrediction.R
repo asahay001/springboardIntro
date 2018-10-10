@@ -42,8 +42,43 @@ createMatchDataSlice_fun <- function (dataFrame = matSummDet, minSeason, maxSeas
   return (matSumm_df)
 }
 
-    # Let's start the EOI runs prediction at the end of 6th over (then 10th and finally 15th overs for Innings 1)
+# function to determine and update win stats so far: number of matches played, won, and win %:
+updateWinStats_fn <- function (matSummTrng) {
+  # first initialize any previous values of win %, since we need to update with the current values
+  matSummTrng$BatFirstMatchesPlayed  <- 0
+  matSummTrng$BatFirstMatchesWon     <- 0
+  matSummTrng$BatFirstWinPercentage  <- 0
+  matSummTrng$BatSecondMatchesPlayed <- 0
+  matSummTrng$BatSecondMatchesWon    <- 0
+  matSummTrng$BatSecondWinPercentage <- 0
+  # Now start the evaluation: remember that teams in a match are in columns BatFirst and BatSecond
+  # so the stats will need to be calculated for both columns: BatFirst and BatSecond
+    
+  batFirstCount <- matSummTrng %>% group_by(BatFirst) %>% count(BatFirst)
+  batSecondCount <- matSummTrng %>% group_by(BatSecond) %>% count(BatSecond)
+  playedCount <- batFirstCount %>% inner_join(batSecondCount, by = c("BatFirst" = "BatSecond")) %>%
+    mutate(matchesPlayed = n.x + n.y) %>% select(team = BatFirst, matchesPlayed)
+  matchesWonStat <- matSummTrng %>% ungroup() %>% 
+    select (winner) %>% group_by(winner) %>% count(winner) %>%
+    inner_join(playedCount, by = c("winner" = "team")) %>% 
+    mutate(winPercentage = round((n / matchesPlayed) * 100,2)) %>% 
+    select (team = winner, matchesPlayed, matchesWon = n, winPercentage)
+  matSummTrng <- matSummTrng %>% ungroup() %>% 
+    left_join(matchesWonStat, by = c("BatFirst" = "team")) %>%   # First for BatFirst team
+    select(Season:venueCity, 
+           BatFirstMatchesPlayed = matchesPlayed, BatFirstMatchesWon = matchesWon, 
+           BatFirstWinPercentage = winPercentage,
+           Inn1EOIOvers:Over40Wkts) %>%
+    left_join(matchesWonStat, by = c("BatSecond" = "team")) %>%  # Then for BatSecond team
+    select(Season:BatFirstWinPercentage, 
+           BatSecondMatchesPlayed = matchesPlayed, BatSecondMatchesWon = matchesWon, 
+           BatSecondWinPercentage = winPercentage,
+           Inn1EOIOvers:Over40Wkts) %>%
+    arrange(Season, Match_id)
+  return(matSummTrng)
+}   # end of create function updateWinStats_fn
 
+    # Let's start the EOI runs prediction at the end of 6th over (then 10th and finally 15th overs for Innings 1)
 
 modelAICbestFitEOI_fn <- function (over, matSummTrng) {
   
