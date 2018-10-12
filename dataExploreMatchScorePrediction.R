@@ -113,10 +113,10 @@ ggplot(matSumm) +
   coord_flip() +
   labs(x= "Final Score in an Innings", y = "Venue",
        title = paste("High inter-quartile means venue may not be a big contributor"),
-       subtitle = paste("  The outliers, Mohali and the South African grounds have very few matches"),
+       subtitle = paste("  The outliers, Dharamshala and the South African grounds had very few matches"),
        caption = "IPL20 Cricket Data 2008 - 2017"
   )
-# The venue BoxPlot suggests that Mohali ground is high-scoring and Bloemfontein is low-scoring,
+# The venue BoxPlot suggests that Dharamshala ground is high-scoring and Bloemfontein is low-scoring,
 # but the number of data points for these 2 venues is very small. At venues with a higher
 # number of matches, the inter-quartile range is high, meaning runs scored fluctuate 
 # even at the same venue; will see what the model will show
@@ -165,15 +165,26 @@ ggplot(mapping = aes(x = BatFirstWinsInLast3Mat, fill = TeamBattingFirstWon)) +
   )
 ggplot(mapping = aes(x = BatFirstWinsInLast5Mat, fill = TeamBattingFirstWon)) +
   geom_bar (data = matSumm, position = "fill") +
-  labs(x= "Times Team A has won the last 5 matches between the two", 
+  labs(x= "Win % of Team A against all teams", 
        y = "Likley % that Team A will win today ",
-       title = paste("Your chances of winning today are much better today if..."),
-       subtitle = paste("...you have more of your reccent matches against this opponent"),
+       title = paste("Your chances of winning today are much better if..."),
+       subtitle = paste("...you have won more of your reccent matches against this opponent"),
        caption = "IPL20 Cricket Data 2008 - 2017"
   )
 # This plot shows that the chances of a team winning today is better if it has won
 # more of the last 5 matches against today's opponent. Result of just the last
 # match between these 2 teams does not seem to have a major bearing on this match's result
+
+# Another thing to examine is a team's past record against all teams:
+ggplot(mapping = aes(x = BatFirstWinPercentage, fill = TeamBattingFirstWon)) +
+  geom_bar (data = matSumm, position = "fill") +
+  labs(x= "Win % of Team A against all teams", 
+       y = "Likley % that Team A will win today ",
+       title = paste("Unless a team has an excellent win %, the match is too close to call"),
+       subtitle = paste("Your chances of losing are high if you have been winning less than 50%"),
+       caption = "IPL20 Cricket Data 2008 - 2017"
+  )
+
 
 # Now explore effect of runs scored in powerplay overs on final score
 ggplot(mapping = aes(x=Over6Runs, y = Inn1EOIRuns), data = matSumm) +

@@ -20,7 +20,7 @@
 
     # Set files dirctory from where to read data (csv files). 
 filesDir <- "C:\\work\\dataScience\\springboard\\springboardIntro"
-    #setwd(filesDir)
+    setwd(filesDir)
 
 library ("tidyverse")
 library("dplyr")
@@ -34,7 +34,9 @@ runType <- "FinalTest"  # Final Test is ONLY for 2018 Eliminator matches
 
     # Read the match summary csv file previously prepared with scorePred_ver1.R
     # or for 2018 file with dataWrangling_2018IPLDataForTesting
-matSummDet <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep = ",")
+matSummDet <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, 
+                       sep = "," #, stringsAsFactors = FALSE
+                       )
 
 FirstTime <- TRUE  ## Variable showing if the processing has just started: will create 
                     # the result data frame. For subsequent processing, will append to this data frame
@@ -57,7 +59,9 @@ maxSeasonInit <- minSeasonInit + SeventyPercentSeason - 1
 TestSeasonSlice <- maxSeasonInit + 1
 MaxTestSeasonData <- maxSeasonData
 if (runType == "FinalTest" ) { ## Read Test data
-  matSummTestSeason <- read.csv(file= "wrangled_matchSummaryDataIPL2018only.csv", header = TRUE, sep = ",")
+  matSummTestSeason <- read.csv(file= "wrangled_matchSummaryDataIPL2018only.csv", 
+                                header = TRUE, sep = "," #, stringsAsFactors = FALSE
+                                )
   TestSeasonSlice <- max(matSummTestSeason$Season)
   MaxTestSeasonData <- TestSeasonSlice  # 2018; just the one year
   maxSeasonInit <- maxSeasonData        # Use all of the 2008-2017 data for training the model
@@ -65,19 +69,25 @@ if (runType == "FinalTest" ) { ## Read Test data
   }
       # Training Data:
       ## First create the Training Data (adding successively each season on which Testing has been completed)
-matSummTrngInit <- createMatchDataSlice_fun(minSeason = minSeasonInit, maxSeason = maxSeasonInit)
+matSummTrngInit <- createMatchDataSlice_fn(minSeason = minSeasonInit, maxSeason = maxSeasonInit)
 
 while (TestSeasonSlice <= MaxTestSeasonData) {  
               # Start testing model on matches in each season, one season at a time
   if (runType != "FinalTest") {
-      matSummTestSeason <- createMatchDataSlice_fun(minSeason = TestSeasonSlice, 
+      matSummTestSeason <- createMatchDataSlice_fn(minSeason = TestSeasonSlice, 
                                               maxSeason = TestSeasonSlice)  # Test data for the model: successively 2015, 2016 and 2017 season data 
   }      # else matSummTestSeason has already been read as 2018 data
  
-         # So let's start the EOI runs prediction at the end of 6th over (then 10th and finally 15th overs for Innings 1)
-
             ## First update with recent winners between 2 teams in recent matches
+            ## This is done once at the start of processing for EACH iteration:
+            ## so if the Training Data is up till 2014, we consider matches only up till 2014,
+            ## when the Training Data is extended through 2015, we consider matches till 2105,
+            ## similarly through 2016 next, and finally all the data, i.e., through 2017:
   matSummTrngInit = updateRecentWinsInDataSet_fn (matSummTrngInit)
+  
+  # Next create stats for matches played by each team and win percentage of the matches played
+  # ONLY through the Seasons being considered (not all of the data set unless its the last iteration)
+  matSummTrngInit = updateWinStats_fn (matSummTrngInit)
   
   # Now call functions to get the best fit models on Training Data at the end of various overs, 
   # and also winner predictors (Training Data is revised as testing is done on each successive season):
@@ -89,10 +99,22 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
   runsInn2EOIAtOver35Model <- modelAICbestFitEOI_fn (over=35, matSummTrngInit)
 
   winnerAtOver0Model      <- predictWinner_fn (over =  0, matSummTrng = matSummTrngInit)
+        ## print (winnerAtOver0Model)
   winnerInn2AtOver20Model <- predictWinner_fn (over = 20, matSummTrng = matSummTrngInit)
   winnerInn2AtOver26Model <- predictWinner_fn (over = 26, matSummTrng = matSummTrngInit) # predicting winner at the end of 26th over
   winnerInn2AtOver30Model <- predictWinner_fn (over = 30, matSummTrng = matSummTrngInit)
   winnerInn2AtOver35Model <- predictWinner_fn (over = 35, matSummTrng = matSummTrngInit)
+     ## print("after initial prediction calls")
+      
+  # Now account for new teams that may come in a new season (new levels):
+  winnerInn2AtOver20Model$xlevels[["BatFirst"]] <- 
+    union(winnerInn2AtOver20Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  winnerInn2AtOver26Model$xlevels[["BatFirst"]] <- 
+    union(winnerInn2AtOver26Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  winnerInn2AtOver30Model$xlevels[["BatFirst"]] <- 
+    union(winnerInn2AtOver30Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  winnerInn2AtOver35Model$xlevels[["BatSecond"]] <- 
+    union(winnerInn2AtOver35Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
   
   winnerInn2AtOver20Model$xlevels[["BatSecond"]] <- 
     union(winnerInn2AtOver20Model$xlevels[["BatSecond"]], levels(matSummTestSeason$BatSecond))
@@ -105,24 +127,44 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
   
   winnerAtOver0Model$xlevels[["BatFirst"]] <- 
     union(winnerAtOver0Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  runsInn1EOIAtOver6Model$xlevels[["BatFirst"]] <- 
+    union(runsInn1EOIAtOver6Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  runsInn1EOIAtOver10Model$xlevels[["BatFirst"]] <- 
+    union(runsInn1EOIAtOver10Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  runsInn1EOIAtOver15Model$xlevels[["BatFirst"]] <- 
+    union(runsInn1EOIAtOver15Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  runsInn2EOIAtOver26Model$xlevels[["BatFirst"]] <- 
+    union(runsInn2EOIAtOver26Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  runsInn2EOIAtOver30Model$xlevels[["BatFirst"]] <- 
+    union(runsInn2EOIAtOver30Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+  runsInn2EOIAtOver35Model$xlevels[["BatFirst"]] <- 
+    union(runsInn2EOIAtOver35Model$xlevels[["BatFirst"]], levels(matSummTestSeason$BatFirst))
+         ## print ("after all leveling")
   
   for (row in 1:nrow(matSummTestSeason)) {  # Process 1 match at a time after initializing variables from prev row
             # initialize variables used to populate the dataframe with results of predictions
     matchID <- matSummTestSeason$Match_id[row]  # 1 row only per match
-    matSummTestMatch <- createMatchDataSlice_fun (dataFrame = matSummTestSeason, minSeason = TestSeasonSlice, 
+    matSummTestMatch <- createMatchDataSlice_fn (dataFrame = matSummTestSeason, minSeason = TestSeasonSlice, 
                                         maxSeason = TestSeasonSlice, matchId = matSummTestSeason$Match_id[row])
     if (is.na(matSummTestMatch$BatFirst)) {
       next
     } 
+              # So let's start the End Of Innings (EOI) runs prediction at the end of 6th over 
+              # (then 10th and finally 15th overs for Innings 1)
+   ## print ("Before 6")
     Over6EOIRunsPred = predict (runsInn1EOIAtOver6Model, newdata = matSummTestMatch)
+   ## print ("After 6")
     Over6RunsErr <- Over6EOIRunsPred[1] - matSummTestMatch$Inn1EOIRuns
     Over6PerErr <- (Over6RunsErr/matSummTestMatch$Inn1EOIRuns) * 100 # Percentage error w.r.t. actual EOI
     if (matSummTestMatch$Inn1EOIOvers >= 10) { #Only if the 1st Innings lasts at least 10 overs
+            ## print ("Before 10")
       Over10EOIRunsPred = predict (runsInn1EOIAtOver10Model, newdata = matSummTestMatch)
+           ## print ("After 10")
       Over10RunsErr <- Over10EOIRunsPred[1] - matSummTestMatch$Inn1EOIRuns
       Over10PerErr <- (Over10RunsErr/matSummTestMatch$Inn1EOIRuns) * 100 # Percentage error w.r.t. actual EOI
     }   # end of 10th over processing
     if (matSummTestMatch$Inn1EOIOvers >= 15) { #Only if the 1st Innings lasts at least 15 overs
+           ## print ("Before 15")
       Over15EOIRunsPred = predict (runsInn1EOIAtOver15Model, newdata = matSummTestMatch)
                       #print (row)
                       #print (matSummTestMatch$Inn1EOIRuns)
@@ -133,9 +175,13 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
     }  # end of 15th over processing
     
                   # Try to predict match winner at the start of the match, right after the
-                  # toss, before even a ball is bowled. This is the baseline winner prediction
+                  # toss, before even a ball is bowled. This is the baseline winner prediction.
+                  # Anything above 50% accurcy will make the data science project worth the effort
     
+             ## print ("Before Win 0")
     Over0WinnerPredBatFirstTeamModel = predict (winnerAtOver0Model, newdata = matSummTestMatch)
+              ##print (Over0WinnerPredBatFirstTeamModel)
+        
     if (Over0WinnerPredBatFirstTeamModel >0.5 ) {  # Prediction that Team Batting First will win
       correctmatchWinnerPredictedModelOver0 <- ifelse (matSummTestMatch$BatFirst == matSummTestMatch$winner,
                                                         TRUE, FALSE )
@@ -145,9 +191,10 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
                                                         TRUE, FALSE )
       predO0TeamBatFirstWinMod <- FALSE
     } 
-                 # Now take a shot at predciting winner at the end of 1st innings; 
-                  # I am getting a low adjusted R2 of 0.21 !!
-                  # print ("20 start")
+                  # Now take a shot at predciting winner at the end of 1st innings; 
+                  # Hopefully accuracy will be better than at the start of the match !!
+        
+             ## print ("Before Win 20")
     Over20WinnerPredBatFirstTeamModel = predict (winnerInn2AtOver20Model, newdata = matSummTestMatch)
                   # print ("20 done")
     if (Over20WinnerPredBatFirstTeamModel >0.5 ) {  # Prediction that Team Batting First will win
@@ -308,13 +355,13 @@ while (TestSeasonSlice <= MaxTestSeasonData) {
   } # finished procesing all matches of a season
   
           ## Append this season's data to the Training Data (adding successively each season on which Testing has been completed)
-  matSummTrngInit <- createMatchDataSlice_fun(minSeason = minSeasonInit, maxSeason = TestSeasonSlice)
+  matSummTrngInit <- createMatchDataSlice_fn(minSeason = minSeasonInit, maxSeason = TestSeasonSlice)
               # print (TestSeasonSlice)
   TestSeasonSlice <- TestSeasonSlice + 1  # Start procesing next season's test data
   
 } # end of Start processing matches in each season, one season at a time
 
-##################### ALL PREDICTIONS?CLASSIFICATIONS COMPLETE ##########################
+##################### ALL PREDICTIONS/CLASSIFICATIONS COMPLETE ##########################
 
 # Now summarize/analyze the predictions
 

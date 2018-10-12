@@ -232,7 +232,8 @@ matDetOverStats <- matDetOverStats %>%
   arrange(Season, Match_id)
 
 # Let's clean out some data: 
-# matDetOverStats %>% group_by(BatFirst) %>% distinct(BatFirst) shows duplicates; let's rename to the latest name:
+# matDetOverStats %>% group_by(BatFirst) %>% distinct(BatFirst) shows teams 
+# called by different names; let's rename to the most current name:
 # 1) Rising Pune Supergiant and Rising Pune Supergiants are the same team
 # 2) Similarly Deccan Chargers team was sold and was renamed Sunrisers Hyderabad
 matDetOverStats$toss <- ifelse(matDetOverStats$toss == "Rising Pune Supergiants", 
@@ -251,12 +252,16 @@ matDetOverStats$BatFirst <- ifelse(matDetOverStats$BatFirst == "Deccan Chargers"
                                    "Sunrisers Hyderabad", matDetOverStats$BatFirst)
 matDetOverStats$BatSecond <- ifelse(matDetOverStats$BatSecond == "Deccan Chargers", 
                                     "Sunrisers Hyderabad", matDetOverStats$BatSecond)
-# Also Bangalore and Bengaluru are really the same cities, with the same stadium/ground:
-# matDetOverStats %>% group_by(venueCity) %>% distinct(venueCity)
+# Also Bangalore and Bengaluru are really the same cities, with the same stadium/ground, and a couple others:
+# data.frame (matDetOverStats %>% group_by(venueCity) %>% tally())
 matDetOverStats$venueCity <- ifelse(matDetOverStats$venueCity == "Bengaluru", 
                                     "Bangalore", matDetOverStats$venueCity)
+matDetOverStats$venueCity <- ifelse(matDetOverStats$venueCity == "Hyderabad (Deccan)", 
+                                    "Hyderabad", matDetOverStats$venueCity)
+matDetOverStats$venueCity <- ifelse(matDetOverStats$venueCity == "Mohali", 
+                                    "Chandigarh", matDetOverStats$venueCity)
 
-# Add a few more columns for Feature Engineering, which mayhelp in better prediction models:
+# Add a few more columns for Feature Engineering, which may help in better prediction models:
 # First, update with recent winners between 2 teams from the most recent matches (1, 3 and 5):
 matDetOverStats = updateRecentWinsInDataSet_fn (matDetOverStats)
 
