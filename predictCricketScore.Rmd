@@ -1,5 +1,5 @@
 ---
-title: "predictCricketScore_amitavSahay"
+title: "Predict IPL T20 Match Winners and Cricket Scores"
 author: "Amitav Sahay"
 date: "August 8, 2018"
 output: html_document
@@ -25,9 +25,9 @@ I am aware of the following caveats which I will investigate if they have a bear
         Sunrisers Hyderabad:      2013-2017         Deccan Chargers:    2008-2012  
         Chennai Super Kings did not play in 2016 and 2017. 
         
-        For the analysis, we will consider Chennai Super Kings as a regular team since they have played in 8 of the 10 years. And I may combine the two Hyderbad-based teams, Sunrisers Hyderabad and Deccan Chargers, to represent one entity.
+For the analysis, we will consider Chennai Super Kings as a regular team since they have played in 8 of the 10 years. And I may combine the two Hyderbad-based teams, Sunrisers Hyderabad and Deccan Chargers, to represent one entity, as they are essentially  the same team but with different owners.
         
-  2. In 2009, all matches were played in South Africa, not India (different pitches).  
+  2. In 2009, all matches were played in South Africa, not India (different pitches and ground conditions).  
   
   3. The biggest assumption is that even though some of the players have played for multiple teams over the years, for building the score predictive model, I will ignore individuals and concentrate only on team performance. My reasoning is that even though a player may move from one team to another after a couple of years, any team retains majority of its players from one year to the next; a team's composition changes only gradually over years; typically one star player is replaced with another. 
 
@@ -73,7 +73,7 @@ The final data frame for analysis may look like:
   6 Over stage (Runs Scored, and Wickets Lost), 10 over stage, 15 over stage, End of Innings stage  (computed from Ball_By_Ball.csv)
   
   
-  To build the model, the training data list will be expanded in each iteration with the following year's data (i.e., start with 2008-2014 data, then 2008-2015 data, etc.)
+  To build the model, the training data list will be expanded in each iteration with the following year's data (i.e., start with 2008-2014 data, then 2008-2015 data, then 2008-2016, etc.). The following year's data wil be the test data (e.g. 2015 when training data set was 2008-2014)
   
 ## 5. What are your deliverables? Typically, this would include code, along with a paper and/or a slide deck.
  **Code**: Code for my project w/ documentation will be uploaded to my GitHub repository.
@@ -82,5 +82,5 @@ The final data frame for analysis may look like:
 
 **Slide deck**: slide deck for my project will be uploaded to my GitHub repository.
 
-**Blog/Presentation**:	I will share and present project in an office hours session and promote on a blog
+**Blog/Presentation**:	I will share and present project in an office hours session and put the presentation on my public github site. 
 

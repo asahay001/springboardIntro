@@ -304,7 +304,8 @@ ggplot(data = matSumm, mapping = aes(x = Over15Wkts, y = Inn1EOIRuns)) +
 
 ```   
  
-Based on the above sets of plots, _the best correlation of a team's score seems to be the number of runs it scores in the current match and the fewer wickets it loses getting those runs in the early and mid overs_. These runs and wickets parameters will be used for building model prediction for end of innings score. 
+Based on the above sets of plots, _the best correlation of a team's score seems to be the number of runs it scores in the current match and the fewer wickets it loses getting those runs in the early and mid overs_. These runs and wickets parameters will be used for building model prediction for end of innings score.
+
  
  
  
