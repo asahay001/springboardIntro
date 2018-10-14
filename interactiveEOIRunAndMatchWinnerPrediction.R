@@ -440,6 +440,68 @@ paste ("Winner Prediction after 30 Overs: Accuracy is", accuracy30Over, "%")
 paste ("Winner Prediction after 35 Overs: Accuracy is", accuracy35Over, "%")
             print (confMatrix_O35, printStats = FALSE)
 
+# Get data ready for plotting a couple of graphs of the results
+predResSummRMSE_df <- predResSumm_df %>% 
+  gather(Overs, RMSE1, RMSE_O6:RMSE_O35) %>% 
+  select (season, Overs, RMSE1) %>% 
+  mutate (Innings = 1) %>% arrange(season, Overs)
+predResSummRMSE_df$Overs <- ifelse(predResSummRMSE_df$Overs == "RMSE_O6", 
+                                   6, predResSummRMSE_df$Overs)
+predResSummRMSE_df$Overs <- ifelse(predResSummRMSE_df$Overs == "RMSE_O10", 
+                                   10, predResSummRMSE_df$Overs)
+predResSummRMSE_df$Overs <- ifelse(predResSummRMSE_df$Overs == "RMSE_O15", 
+                                   15, predResSummRMSE_df$Overs)
+predResSummRMSE_df$Overs <- ifelse(predResSummRMSE_df$Overs == "RMSE_O26", 
+                                   26, predResSummRMSE_df$Overs)
+predResSummRMSE_df$Overs <- ifelse(predResSummRMSE_df$Overs == "RMSE_O30", 
+                                   30, predResSummRMSE_df$Overs)
+predResSummRMSE_df$Overs <- ifelse(predResSummRMSE_df$Overs == "RMSE_O35", 
+                                   35, predResSummRMSE_df$Overs)
+predResSummRMSE_df$Overs <- as.numeric(predResSummRMSE_df$Overs)
+predResSummRMSE_df$Innings <- ifelse (predResSummRMSE_df$Overs <=20, 1,2)
+predResSummRMSE_df$Innings <- as.factor(predResSummRMSE_df$Innings)
+predResSummRMSE_df$Overs <- ifelse (predResSummRMSE_df$Overs <= 20, predResSummRMSE_df$Overs, 
+                                    predResSummRMSE_df$Overs -20)
+predResSummWinAccuracy_df <- predResSumm_df %>% 
+  gather(Overs, Accuracy, PredictionAccuracyOver0:PredictionAccuracyOver35) %>%
+  select (season, Overs, Accuracy) 
+predResSummWinAccuracy_df$Overs <- ifelse(predResSummWinAccuracy_df$Overs == "PredictionAccuracyOver0",
+                                          0, predResSummWinAccuracy_df$Overs)
+predResSummWinAccuracy_df$Overs <- ifelse(predResSummWinAccuracy_df$Overs == "PredictionAccuracyOver20",
+                                          20, predResSummWinAccuracy_df$Overs)
+predResSummWinAccuracy_df$Overs <- ifelse(predResSummWinAccuracy_df$Overs == "PredictionAccuracyOver26",
+                                          26, predResSummWinAccuracy_df$Overs)
+predResSummWinAccuracy_df$Overs <- ifelse(predResSummWinAccuracy_df$Overs == "PredictionAccuracyOver30",
+                                          30, predResSummWinAccuracy_df$Overs)
+predResSummWinAccuracy_df$Overs <- ifelse(predResSummWinAccuracy_df$Overs == "PredictionAccuracyOver35",
+                                          35, predResSummWinAccuracy_df$Overs)
+predResSummWinAccuracy_df$Overs <- as.numeric(predResSummWinAccuracy_df$Overs)
+predResSummWinAccuracy_df$season <- as.factor(predResSummWinAccuracy_df$season)
+
+ggplot(mapping = aes(x= Overs, y = Accuracy), 
+       data = predResSummWinAccuracy_df) +
+  geom_point(mapping = aes(color = season)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = c(0, 20, 26, 30, 35)) +
+  labs(x= "Winner Predictions at various Overs", 
+       y = "Prediction % Accuracy",
+       title = paste("> 60% Certainty of Winner Prediction At Start"),
+       subtitle = paste("Which Improves to 75%, 10 Overs Before Finish"),
+       caption = "IPLT20 Cricket Data 2015 - 2018"
+  )
+
+ggplot(mapping = aes(x= Overs, y = RMSE1, color = Innings), 
+                     data = predResSummRMSE_df) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = c(6, 10, 15)) +
+  labs(x= "Final Score Predictions at various Overs", 
+       y = "Root Mean Square Error of Score",
+       title = paste("Later the prediction, less the RMSE"),
+       subtitle = paste("Adjusted R square improves from 0.22 to 0.68"),
+       caption = "IPLT20 Cricket Data 2015 - 2018"
+  )
+                        
             # write out the predictions for EOI Runs and winners to a csv file: 
 write.csv(predRes_df, "MatchByMatchResultPredictionsIPL.csv")
 if (runType == "FinalTest") {
