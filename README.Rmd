@@ -1,0 +1,56 @@
+---
+title: "README"
+author: "Amitav Sahay"
+date: "October 15, 2018"
+output: html_document
+---
+
+## Documentation
+
+execSummaryCricketIPL_predictions.html  Final report : knit file
+dataExploration.html                    Graphs and correlations: knit file
+dataWranglingIPLT20.html                Details on data manipulations: knit file
+
+execSummaryCricketIPL_predictions.Rmd   Final report
+dataExploration.Rmd                     Graphs and correlations
+dataWranglingIPLT20.Rmd                 Details on data manipulations
+
+## R Program Files
+
+interactiveEOIRunAndMatchWinnerPrediction.R Driver code to run predictions on treated data
+fittingBestModelsForEOIRunsPrediction.R     Functions that are called by driver program
+scorePred_ver1.R                            Data wrangling code for 2008-2017 data files
+dataWrangling_2018IPLDataForTestingProjectWork.R Data Wrangling for 2018 season data file
+dataExploreMatchScorePrediction.R           Data Exploration code
+
+## Plots
+plots.pdf         Graphs plotted during data exploration of 2008-2017 data
+
+## Data Files
+
+### Raw csv files from source
+
+ipl2018deliveries_raw.csv         IPL Test data containing 2018 season: ball by ball
+ipl2018Match_raw.csv              IPL Test data containing 2018 season: 1 row per match
+Match.csv                         IPL data 2008-2017 season: 1 row per match
+Player.csv                        IPL data 2008-2017 season: player details; not used
+Player_match.csv                  IPL data 2008-2017 season: players for a match
+Ball_By_Ball.csv                  IPL data 2008-2017 season: details of each ball
+Team.csv                          IPL data 2008-2017 season: names of franchises
+
+
+### R-produced data files
+
+IPL_PredictionParameters_AIC.xlsx               Relevant variables in predictions
+MatchByMatchResultPredictionsIPL.csv            Test results of Prediction 2015-2018
+MatchPredictionErrorsIPL2015_18.csv             Errors in Prediction 2015-2018
+WinPredictionAccuracyIPL2015_18.csv
+RMSERunsPredictionIPL2015_18.csv
+SummarizedResultPredictionsTestData2018IPL.csv
+SummarizedResultPredictionsIPL.csv
+wrangled_matchSummaryDataIPL2018only
+wrangled_matchSummaryDataIPL.csv                2008 - 2015 data: 1 row per match
+wrangled_ballByBallDataIPL.csv                  2008 - 2015 data: each ball as a row
+wrangled_inningsSummaryDataIPL.csv              2008 - 2015 data: 1 row per innings; not used
+
+
