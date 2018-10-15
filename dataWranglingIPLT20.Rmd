@@ -1,0 +1,98 @@
+---
+title: "IPL T20 Data Acquisition and Wrangling"
+author: "Amitav Sahay"
+date: "October 14, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library ("tidyverse")
+library("dplyr")
+    # Set files dirctory from where to read data (csv files). 
+filesDir <- "C:\\work\\dataScience\\springboard\\springboardIntro"
+setwd(filesDir)
+matDetFile <- "Ball_By_Ball.csv"
+matDet <- read.csv(file = matDetFile, header = TRUE, sep = ",",
+                   stringsAsFactors = FALSE)
+matSumm <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep = ",",
+                    stringsAsFactors = FALSE)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Data Acquisition
+
+There are 2 separate sets of IPL T20 data acquired for this Capstone project:
+1. Data from IPL's inception in 2008 through 2017, all in the same format
+2. Data for IPL 2018, the most current IPL season, used to test the predictive models, in a different format because it was sourced from another website as listed below.
+
+Ball-by-ball data for IPL T20 cricket is available for the 1st 10 years, from 2008 through 2017, in total 637 matches. It was originally published by cricsheet.org in YAML format. It has been transformed into four csv files by a data sceintist and is publicly available [here](https://data.world/raghu543/ipl-data-till-2017) . While the largest file with 150,450 rows has ball-by-ball details of each match (runs scored, wickets lost), the other 3 csv files contain: a) Details at match level: match id, venue, year and date of the match, result, margin of victory, etc.; b) Names of each of the global 495 players who have particpated for the clubs over the 10 years; and c) which player played in which match for which team; this file has about 14,000 rows. Since I focused on team results, not on players, I got all my data from the 1st 3 files, and ignored Players.csv file. 
+
+I will use this as the training data, and get 2018 IPL data from a different data [source](https://www.kaggle.com/nowke9/ipldata/insights) to use as final Test data.
+
+All sourced files are also available on my github project [repository](https://github.com/asahay001/springboardIntro)
+
+
+
+## Data Cleansing
+
+1. Not all teams participated in all the 10 years for which data was analyzed. There were a total of 13 teams across the 10 years of Training data. Teams who did not play every year are: 
+        Kochi Tuskers Kerala:     2011  only 
+        Gujarat Lions:            2016-2017
+        Rising Pune Supergiant:   2016, 2017        Pune Warriors:      2011-2013  
+        Sunrisers Hyderabad:      2013-2017         Deccan Chargers:    2008-2012  
+        Chennai Super Kings did not play in 2016 and 2017. 
+For the analysis, I combined the two Hyderbad-based teams, Sunrisers Hyderabad and Deccan Chargers, to represent one entity, as they are essentially the same team that changed ownership in 2013.
+2. There were some naming cleansing necessary too:
+  * Rising Pune SUpergiant changed its name from Rising Pune Supergiants (plural) in 2017. Tis was necessary in multiple columns: Team Batting 1st, Team Batting 2nd, Toss winner, and match winner. 
+  * Match venue cities Mohali and Chandigarh refer to the same entity, as do Bangalore and Bengaluru. This was revealed when exploring the data with the R dyplr statement: 
+  data.frame (matDetOverStats %>% group_by(venueCity) %>% tally())
+3. Some of the matches were very short, either due to weather (rains), or when one team's batting collapsed and the other team romped home quickly. To keep the predictions consistent, I removed these outliers from the dataset. I mandated that an innings must have completed at least 12 (of the maximum 20) overs to build and test prediction models.
+4. I also removed any innings that went into a super over as a result of tie at the completion of 2 innings of a match. I did consider the tie result, just not the super over (3rd innings). 
+
+
+## Data Wrangling
+
+1. The most significant challenge was to summarize the scenarios as end-of-over scenarios, rather than ball-by-ball, and then to transofrm the cumulative runs scored and wickets lost by the end of each of the 40 overs (20 per side) from rows to columns. This transformation allowed me to use the normal observations-variables data format in rows and columns respectively for modeling. Basically, while the ball-by-ball details of the each match was in rows, they were transformed to 1 row per match which included both the scores for each of the 2 innings for each of the 20 overs. This reduced the number of total rows in 2008-2014 data set from 150,000 to about 650 very wide rows. I used dyplr and spread function to achieve this. While doing the summation to overs, care was taken to include the use case where some overs might have more or less than the ususal 6 balls. 
+2. Joins were also done with Teams data file to get the batting and bowling team names from their respective ids, and also the names of the toss and match winners
+
+Before transformation, a portion of raw data looked like this:
+```{r RawData, include=TRUE}
+print (matDet %>% filter (MatcH_id == 392244 & Over_id >= 19) %>% 
+         arrange (desc(MatcH_id), Innings_No, Over_id, Ball_id) %>% 
+         head(12) %>% select (MatcH_id, Team_Batting, Over_id, Ball_id, Runs_Scored,
+                      Bowler_Wicket, Run_out) )
+
+```
+And after transformation, the data became:
+```{r TransformedData, include=TRUE}
+
+print( matSumm %>% filter (Match_id == 392244) %>% 
+         select (Match_id, BatFirst, Over19Runs, Over19Wkts, Over20Runs, Over20Wkts) )
+
+```
+
+3. Fore more accurate predictions, after data exploration, I added extra columns and computed their values as part of Feature Engineering:
+  * Result of last match, the last 3 matches, and last 5 matches between each set of 2 teams
+  * Matches played, matches won, and winning % of each team
+  * End of Innings (EOI) status: which over was the last over for each innings if a match (while 20 is maximum allowed, teams may be all out or win before the max), final run tally and the total wickets lost were put under 3 EOI columns. 
+
+4. Since 2018 IPL data was obtained from a different source, its structure had to be manipulated to match the structure of the above-mentioned training data (2008-2017). This required different joins. 
+
+5. Finally, some data manipulation was necessary to create Confusion Matrix at the end of the modeling exercise and also to create presentation graphs from the confusion matrices. 
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+

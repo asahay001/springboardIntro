@@ -497,7 +497,7 @@ ggplot(mapping = aes(x= Overs, y = RMSE1, color = Innings),
   scale_x_continuous(breaks = c(6, 10, 15)) +
   labs(x= "Final Score Predictions at various Overs", 
        y = "Root Mean Square Error of Score",
-       title = paste("Later the prediction, less the RMSE"),
+       title = paste("The later the prediction, the less the Error"),
        subtitle = paste("Adjusted R square improves from 0.22 to 0.68"),
        caption = "IPLT20 Cricket Data 2015 - 2018"
   )
@@ -509,7 +509,9 @@ if (runType == "FinalTest") {
 } else {
   write.csv(predResSumm_df, "SummarizedResultPredictionsIPL.csv")
 }
-  
+write.csv(predResSummWinAccuracy_df, "WinPredictionAccuracyIPL2015_18.csv")
+write.csv(predResSummRMSE_df, "RMSERunsPredictionIPL2015_18.csv")
+write.csv(predRes_df1, "MatchPredictionErrorsIPL2015_18.csv")  
 
 
 
