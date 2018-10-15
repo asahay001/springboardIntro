@@ -50,6 +50,7 @@ For the analysis, I combined the two Hyderbad-based teams, Sunrisers Hyderabad a
   data.frame (matDetOverStats %>% group_by(venueCity) %>% tally())
 3. Some of the matches were very short, either due to weather (rains), or when one team's batting collapsed and the other team romped home quickly. To keep the predictions consistent, I removed these outliers from the dataset. I mandated that an innings must have completed at least 12 (of the maximum 20) overs to build and test prediction models.
 4. I also removed any innings that went into a super over as a result of tie at the completion of 2 innings of a match. I did consider the tie result, just not the super over (3rd innings). 
+5. After running data exploration, I saw scores of a few matches outliers and also a tied result, and I decided to leave them in the dataset. 
 
 
 ## Data Wrangling
@@ -73,7 +74,7 @@ print( matSumm %>% filter (Match_id == 392244) %>%
 
 ```
 
-3. Fore more accurate predictions, after data exploration, I added extra columns and computed their values as part of Feature Engineering:
+3. Fore more accurate predictions, after data exploration, I added extra columns and computed their values as part of Feature Engineering as listed below. To come up with unique sets of teams, I ensured despite the data structure, that the set was unique whether team A was batting or bowling first against its opponent (say in 1 match, Team A will bat first against Team B, and in another match,Team B will bowl first against the same oppoenent; but the two sets are identical for determining who was playing who).
   * Result of last match, the last 3 matches, and last 5 matches between each set of 2 teams
   * Matches played, matches won, and winning % of each team
   * End of Innings (EOI) status: which over was the last over for each innings if a match (while 20 is maximum allowed, teams may be all out or win before the max), final run tally and the total wickets lost were put under 3 EOI columns. 

@@ -151,6 +151,7 @@ Chennai Super Kings did not play in 2016 and 2017. For the analysis, I combined 
 <ol start="3" style="list-style-type: decimal">
 <li>Some of the matches were very short, either due to weather (rains), or when one team’s batting collapsed and the other team romped home quickly. To keep the predictions consistent, I removed these outliers from the dataset. I mandated that an innings must have completed at least 12 (of the maximum 20) overs to build and test prediction models.</li>
 <li>I also removed any innings that went into a super over as a result of tie at the completion of 2 innings of a match. I did consider the tie result, just not the super over (3rd innings).</li>
+<li>After running data exploration, I saw scores of a few matches outliers and also a tied result, and I decided to leave them in the dataset.</li>
 </ol>
 </div>
 <div id="data-wrangling" class="section level2">
@@ -183,7 +184,7 @@ Chennai Super Kings did not play in 2016 and 2017. For the analysis, I combined 
 <pre><code>##   Match_id            BatFirst Over19Runs Over19Wkts Over20Runs Over20Wkts
 ## 1   392244 Sunrisers Hyderabad        134          5        143          6</code></pre>
 <ol start="3" style="list-style-type: decimal">
-<li>Fore more accurate predictions, after data exploration, I added extra columns and computed their values as part of Feature Engineering:</li>
+<li>Fore more accurate predictions, after data exploration, I added extra columns and computed their values as part of Feature Engineering as listed below. To come up with unique sets of teams, I ensured despite the data structure, that the set was unique whether team A was batting or bowling first against its opponent (say in 1 match, Team A will bat first against Team B, and in another match,Team B will bowl first against the same oppoenent; but the two sets are identical for determining who was playing who).</li>
 </ol>
 <ul>
 <li>Result of last match, the last 3 matches, and last 5 matches between each set of 2 teams</li>

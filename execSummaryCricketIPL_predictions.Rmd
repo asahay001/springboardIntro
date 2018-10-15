@@ -160,9 +160,10 @@ Data Exploration of all IPL T20 data from beggining to now shows most teams are 
 ## Ideas for improvement
 
 1. Instead of trying to predict exact score a team will make in its assigned overs, it may be better to try to predict a band in which the score will fall. The band can be 10 runs wide at the start of an innings, and can be narrowed to 5 runs at the half way mark of an innings. 
-2. Predictions can be revised at the end of each over and at the fall of every wicket, rather than the few stages chosen here
-3. Weather conditions can be added to the variable list to see how heat, humidity and rain influence teams' scores. 
-4. Since data is compared across seasons for predicting winners, consider the following:
+2. Predictions can be revised at the end of each over and at the fall of every wicket, rather than the few stages chosen here.
+3. Better feature enginnering to account for venue city: consider adding a column that will reflect if Team A was playing on its home ground, and compute stats for winning record on home and away grounds and store them as independent variables for the prediction models. 
+4. Weather conditions can be added to the variable list to see how heat, humidity and rain influence teams' scores. 
+5. Since data is compared across seasons for predicting winners, consider the following:
   * Analyze statistics of players' performances to see how movement of players across teams influences match results. 
   * Analyze team compositions to study how teams expect the ground to play. For example on a spinning pitch, did a team rest a couple of its top line spinners and instead went with extra batsmen.
   * Analyze team's stratgey: example, who a team brings on to bowl at different stages of the match or against specific players (say a batsman has a weakness at the start of his nnings against slow left arm bowler: does the opponent have overs remaining from such a bowler when that batsman comes out to bat). 
