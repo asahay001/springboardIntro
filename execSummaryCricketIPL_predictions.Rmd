@@ -1,0 +1,172 @@
+---
+title:  "Final Capstone Report: Cricket IPL T20 Predictions"
+author: "Amitav Sahay"
+date:   "October 12, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library ("tidyverse")
+library("dplyr")
+library("ggplot2")
+library("leaps")
+library("caret")
+filesDir <- "C:\\work\\dataScience\\springboard\\springboardIntro"
+setwd(filesDir)
+predResSummWinAccuracy_df <- read.csv(file= "WinPredictionAccuracyIPL2015_18.csv",
+                                      header = TRUE, sep = ",", stringsAsFactors =TRUE)
+predResSummRMSE_df <- read.csv ( file = "RMSERunsPredictionIPL2015_18.csv",
+                                 header = TRUE, sep = ",", stringsAsFactors =TRUE)
+predRes_df1 <- read.csv(file = "MatchPredictionErrorsIPL2015_18.csv",
+                        header = TRUE, sep = ",", stringsAsFactors =TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ongoing Cricket IPL Matches: Who will score how many, who will win today?
+
+
+
+## Executive Summary
+
+Do you like watching T20 cricket? Have you wondered during such a match if your favorite team would win today, and how many runs would they score against their opponent? If you are a betting person, do you agonize over how crucial the toss would be to the final verdict, or would last match's result between two teams be significant in today's repeat clash? Have you wished wouldn't it be nice if the big screen in a stadium flashed win and score predictions periodically, or if you are watching at home, that your TV showed such informed predictions? And revised these predictions as the match progressed with increasing accuracy? Have you yearned for someone to do these predictions scientifically, instead of you having to settle with your gut feel, recalling from your memory what happened in similar situations in the past? If yes, then welcome to my data science project for finding these answers. 
+
+If you are pressed for time, feel free to jump to my [conclusion](#conclusion).
+
+
+## Introduction
+
+In 2008, when Indian Premier League (IPL) was launched as the 20 overs-a-side franchise club cricket competition, it revolutionized the cricketing experinece among cricket-playing nations. Matches which now lasted just over 3 hours instead of the arduous 5 days or even 9 hours, brought pomp and color to the cricket arena, global participation, and along with them, packed stadiums with entire families and a frenetic fan-following. Cricket is the second most watched sports world-wide, and today IPL Twenty20 (T20) cricket is a flourishing brand, evaluated at USD 5.3 billion at the end of 2017 season. Spectator interest is at an all-time high, and global media rights have been sold for USD 2.55 billion for 5 years starting 2018. Each IPL season has about 60 matches, played over 45 days primarily in the evenings or weeekends for maximum audience particpation, and brings the best global players who are auctioned every few years at unprecedented prices thanks to the paying public. Before, during and after each match, the social media is abuzz with discussions. Some of the most discussed topics are whether a fan's favorite franchise will win tonight's match, and how many runs will each of the two teams socre in their allotted maximum 20 overs. People pray, guess, look at past records. 
+
+But with detail data from over 650 matches since IPL's inception, it is time for data science to provide some of these answers. Data science can make the above-mentioned predictions more accurate than statistics recalled from memory and crunched in the head. That is exactly what this Capstone project has done. TV broadcasters can use the model results to show with greater certainty before each match who is likley to win, and as the match progresses, predict with increasing probability of how many runs the team batting first will score and if that would be enough for them to win. It will result in even greater spectator involvement as they watch these predictions updated on their TVs and the big screen with the most current data, say at the end of 6th over, 10th over and 15th over of each of the two innings. Rather than hope and pray, the informed spectator will have more insights into the progress of a game. 
+
+While betting is largely illegal in India, it is popular in many parts of the world and there are plenty of websites doing good business during IPL matches. Such audiences can also benefit from a good predictive model while a match is starting or is in its early stages (overs). 
+
+Based on this widescale interest and potentially large market for educated guesstimates, I created my Capstone project [proposal](https://github.com/asahay001/springboardIntro/blob/master/predictCricketScore.Rmd).
+
+## Data Acquisition and Wrangling
+
+To keep this report flowing with more useful insights, I have summarised the steps for data sourcing, cleansing and manipulation, [elsewhere](https://github.com/asahay001/springboardIntro/blob/master/dataWranglingIPLT20.html), or [2](https://github.com/asahay001/springboardIntro/blob/master/dataWranglingIPLT20.Rmd).
+
+
+## Approach to model prediction
+
+To build a strong predictive model, I first sourced ball-by-ball data from the internet of every IPL T20 match since 2008 when IPL started. After necessary data cleansing and formatting, I divided the data into 2 parts: the oldest 70% of the data (2008-2014) became my initial _training data_ for data exploration and 1st cut at building the prediction model. I tested my set of models on IPL 2015 season data (about 60 matches), and then incorprated this data into the training dataset as well: 2008-2015. After refining the predictive models with the enlarged training data, I tested them against 2016 data, one match at a time, with a *while* loop. I repeated this process in the next iteration with the final season's data: 2017. With my model prediction ranging from 70-80% accuracy, I felt good about doing the final test against the most current so far, IPL 2018 season, which I got from a different internet soure. It had to be formatted to the same structure as my original 2008-2017 dataset, and after that I tested my models one final time on this new 2018 data to check if the models will hold true for subsequent seasons as they happen in the future.
+
+### Data Exploration
+
+With the help of R, I looked at the correlations between the variables, where the dependent variables were: a) who will win a given match as it progressed, and b) how many runs will each team end up scoring. There were over a 100 independent variables to choose from, given that the fortunes of a match fluctuates with each ball in the shortened version of the game. There were also pre-game potential influencing factors like who had won the match the last time they had played, the venue of the game, and the toss; winning the toss gave a team the psycholigical advantage even before a ball was bowled, but did it translate to that team's victory. Some interesting observations from the data exploration were:
+1. The top 4 of the 10 teams had better than 50% record of winning, and the top 8 had a 45% or better win record; this suggested no team was an outright favorite in most match-ups.
+2. Matches were so close most of the time, that the result of the _last match_ between two teams did not appear to have any bearing on today's game
+3. Losing the toss or playing away from your home ground also did not appear to sway the results as most of the teams coped with any such perceived disadvantages. 
+4. The most significant factors for winning seemed to be how the teams played on that specific day: positive relationship with the number of runs scored at the end of specific overs, and negative relationship with the number of wickets lost early on. 
+For more details on data exploration and findings, please click [here](https://github.com/asahay001/springboardIntro/blob/master/dataExploration.Rmd). And the pictorial representation of the data exploration is in these [plots](https://github.com/asahay001/springboardIntro/blob/master/plots.pdf).
+
+
+### Building a predictive model, or really a set of them!
+
+With so many variables in play, the teams so evenly balanced, the results often too close to call till the last couple of overs, and multiple models to build, manual trial and error to choose the best model for each of the predictions was not the right aproach. Also, because the match fluctuates as it progresses, I decided I needed to model my predictions at periodic points of the match: 
+
+  a) _match winner_ at the start of each game, 
+  b) at the end of innings one (1st team's batting), 
+  c) at the end of 2nd team's 6th, 10th and 15th overs.
+  d) And _end of innings_ score prediction for _each team_ at the end of their respective:
+  e) 6th over (significance of 6 overs is that it marks the end of PowerPlay),
+  f) 10th over, and
+  g) 15th over.
+
+When evaluating the potential list of independent variables to build the best-fit linear models, I considered 2 alternatives in R: choose the model either based on i) adjusted R^2, or ii) the lowest AIC. Because R has a handy automated *step* fucntion to build the most suitable linear model based on lowest AIC from a large list of variables, I went with this option, over choosing the adjusted R^2 and _leaps_ function.  
+
+
+## Predictive Model Results
+
+.That predictions improved as the match progressed, both for the match winner and the final run tally for each team, was expected, but what was revealing was that of the 100 odd variables, R will pick as many as 31 of them for the various predictions; indeed data science principles would provide much more accurate predictions than the human head could. These influencers have been detailed [here](https://github.com/asahay001/springboardIntro/blob/master/IPL_PredictionParameters_AIC.xlsx). The critical variables have been put under 3 major categories:
+
+1. _Pre-match factors_: For predicting the result of the match between today's two teams, the result of the last match or even the last 3 matches between them, were not as significant as the overall winning records of the two teams against all opponents. As far as matches between the two teams goes, only the results of as many as the last 5 matches between the two teams had some bearing on today's game. Games were indeed close.
+
+  2. _Factors while the 1st team was batting (Innings 1)_: Runs and wickets lost in the overs when the predictions were being made were the most crucial.
+    
+  3. _Factors while the 2nd team was batting (Innings 2)_: Revealing in this group was the impact of certain overs even from the 1st innings with respect to runs and wickets.
+
+One of the ways to measure success of predicting a continuous variable, End of Innings Score, is to measure the Root Mean Square Errror of the predictions made at various stages of each of the two innings during a match. While for the categorical variable, Win or Lode prediction, I classified it using a threshold score from the prediction model, and plotted the accuracy of prediction at various stages of the match, as shown below. 
+
+```{r PredictionResults, out.width = "50%", fig.align = "default", echo=FALSE, warning=FALSE}
+
+predResSummWinAccuracy_df$season <- as.factor(predResSummWinAccuracy_df$season)
+predResSummRMSE_df$Innings <- as.factor(predResSummRMSE_df$Innings)
+ggplot(mapping = aes(x= Overs, y = Accuracy), 
+       data = predResSummWinAccuracy_df) +
+  geom_point(mapping = aes(color = season)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = c(0, 20, 26, 30, 35)) +
+  labs(x= "Winner Predictions at various Overs", 
+       y = "Prediction % Accuracy",
+       title = paste("> 60% Certainty of Winner Prediction At Start"),
+       subtitle = paste("Which Improves to 75%, 10 Overs Before Finish"),
+       caption = "IPLT20 Cricket Data 2015 - 2018"
+  )
+
+ggplot(mapping = aes(x= Overs, y = RMSE1, color = Innings), 
+                     data = predResSummRMSE_df) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = c(6, 10, 15)) +
+  labs(x= "Final Score Predictions at various Overs", 
+       y = "Root Mean Square Error of Score",
+       title = paste("The later the prediction, the less the Error"),
+       subtitle = paste("Adjusted R square improves from 0.22 to 0.68"),
+       caption = "IPLT20 Cricket Data 2015 - 2018"
+  )
+
+
+```   
+
+Also, the results of predictions for all the 224 matches tested over 4 IPL seasons are better visualized via Confusion Matrices, which show how many times the model could accurately predict a team would win (True-True) and how many times it would lose (False-False):
+
+```{r ConfusionMatrix, echo=FALSE, warning=FALSE}
+confMatrix_O0  <- confusionMatrix(as.factor(predRes_df1$predO0TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O20 <- confusionMatrix(as.factor(predRes_df1$predO20TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O26 <- confusionMatrix(as.factor(predRes_df1$predO26TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O30 <- confusionMatrix(as.factor(predRes_df1$predO30TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+confMatrix_O35 <- confusionMatrix(as.factor(predRes_df1$predO35TeamBatFirstWinMod), 
+                                  as.factor(predRes_df1$actualTeamBatFirstWin))
+                  # Since confusionMatrix output is a list, we can access the results:
+accuracy0Over  <- round(confMatrix_O0$overall[1]  *100, 0)
+accuracy20Over <- round(confMatrix_O20$overall[1] *100, 0)
+accuracy26Over <- round(confMatrix_O26$overall[1] *100, 0)
+accuracy30Over <- round(confMatrix_O30$overall[1] *100, 0)
+accuracy35Over <- round(confMatrix_O35$overall[1] *100, 0)
+paste ("Winner Prediction Right After Toss: Accuracy is", accuracy0Over, "%")           
+            print (confMatrix_O0, printStats = FALSE) 
+paste ("Winner Prediction after 20 Overs: Accuracy is", accuracy20Over, "%")            
+            print (confMatrix_O20, printStats = FALSE) 
+paste ("Winner Prediction after 26 Overs: Accuracy is", accuracy26Over, "%")
+            print (confMatrix_O26, printStats = FALSE)
+paste ("Winner Prediction after 30 Overs: Accuracy is", accuracy30Over, "%")
+            print (confMatrix_O30, printStats = FALSE)
+paste ("Winner Prediction after 35 Overs: Accuracy is", accuracy35Over, "%")
+            print (confMatrix_O35, printStats = FALSE)
+
+```
+
+
+## <a id="conclusion"></a>Conclusion
+
+Data Exploration of all IPL T20 data from beggining to now shows most teams are evenly balanced, many teams have a strong chance of winning a match against its opponent and indeed results between two teams go either way in close finishes. Even though home ground advantage and winning the toss are not significant in match results, with the help of data science and feature enginnering, resulting prediction models can help the fans on the ground or engaged in wagering, and TV broadcasters, predict final socres and match winners with reasonable accuracy. The models show that the most significant factors in today's outcome are not as much past performances as how they play today. Because its today's on-ground performance that counts most in these tight games, it is no suprise that the accuracy improves as the match progresses and predictions are updated periodically. Even with my nascent data science skills, the model can predict a match winner even before a ball is bowled with about 63 % accuracy, which improves to 76% when 10 overs are still left in a match, and almost 80 % by the 35th over (4 out of 5 correct calls). Models show that total runs scored at the end of specific overs and number of wickets lost at the end of the same or a different set of specific overs within a team's batting innings, ultimately are significant in predicting the outcome of a match and the scores the two teams put up. 
+
+## Ideas for improvement
+
+1. Instead of trying to predict exact score a team will make in its assigned overs, it may be better to try to predict a band in which the score will fall. The band can be 10 runs wide at the start of an innings, and can be narrowed to 5 runs at the half way mark of an innings. 
+2. Predictions can be revised at the end of each over and at the fall of every wicket, rather than the few stages chosen here
+3. Weather conditions can be added to the variable list to see how heat, humidity and rain influence teams' scores. 
+4. Since data is compared across seasons for predicting winners, consider the following:
+  * Analyze statistics of players' performances to see how movement of players across teams influences match results. 
+  * Analyze team compositions to study how teams expect the ground to play. For example on a spinning pitch, did a team rest a couple of its top line spinners and instead went with extra batsmen.
+  * Analyze team's stratgey: example, who a team brings on to bowl at different stages of the match or against specific players (say a batsman has a weakness at the start of his nnings against slow left arm bowler: does the opponent have overs remaining from such a bowler when that batsman comes out to bat). 
+
+
+
+
