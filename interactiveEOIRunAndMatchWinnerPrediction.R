@@ -501,6 +501,62 @@ ggplot(mapping = aes(x= Overs, y = RMSE1, color = Innings),
        subtitle = paste("Adjusted R square improves from 0.22 to 0.68"),
        caption = "IPLT20 Cricket Data 2015 - 2018"
   )
+
+errorRuns_df <- data.frame (season = predRes_df1$season, innings = 1, over = 6, 
+                            inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                            runsError = mean (abs(predRes_df1$inn1EOIRuns - predRes_df1$predO6EOIRuns)))
+newRow_df <- data.frame(season = predRes_df1$season, innings = 1, over = 10,
+                        inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                        runsError = mean (abs(predRes_df1$inn1EOIRuns -predRes_df1$predO10EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+newRow_df <- data.frame(season = predRes_df1$season, innings = 1, over = 15,
+                        inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                        runsError = mean (abs(predRes_df1$inn1EOIRuns -predRes_df1$predO15EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+newRow_df <- data.frame(season = predRes_df1$season, innings = 2, over = 6,
+                        inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                        runsError = mean(abs(predRes_df1$inn2EOIRuns -predRes_df1$predO6EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+newRow_df <- data.frame(season = predRes_df1$season, innings = 2, over = 10,
+                        inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                        runsError =  mean(abs(predRes_df1$inn2EOIRuns -predRes_df1$predO10EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+newRow_df <- data.frame(season = predRes_df1$season, innings = 2, over = 15,
+                        inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                        runsError =  mean(abs(predRes_df1$inn2EOIRuns -predRes_df1$predO15EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+errorRuns_df <- errorRuns_df %>% mutate ( runsError = round(runsError,0),
+                                          percentageErrorRuns = ifelse(innings == 1,
+                                                                       round(100 * runsError / inn1EOIRuns, 1),       
+                                                                       round(100 * runsError / inn2EOIRuns, 1) ) )
+
+errorRuns_df$season <- as.factor(errorRuns_df$season)
+errorRuns_df$innings <- as.factor(errorRuns_df$innings)
+
+ggplot(mapping = aes(x= over, y = runsError, color = innings), 
+       data = errorRuns_df) +
+  # geom_point(mapping = aes(shape = season)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = c(6, 10, 15)) +
+  labs(x= "Final Score Predictions at various Overs", 
+       y = "Error in Runs Predicted",
+       title = paste("Model is more off for 2nd Innings predictions"),
+       subtitle = paste("Overall error 16-21 runs for each of the innings"),
+       caption = "IPLT20 Cricket Data 2015 - 2018"
+  )
+
+ggplot(mapping = aes(x= over, y = percentageErrorRuns, color = season), 
+       data = errorRuns_df) +
+  #geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = c(6, 10, 15)) +
+  labs(x= "Final Score Predictions at various Overs", 
+       y = " % Error in Runs Predicted",
+       title = paste("Predictions get better for 2017 and 2018..."),
+       subtitle = paste("..as more training data is added. Overall about 11% error"),
+       caption = "IPLT20 Cricket Data 2015 - 2018"
+  )
+
                         
             # write out the predictions for EOI Runs and winners to a csv file: 
 write.csv(predRes_df, "MatchByMatchResultPredictionsIPL.csv")

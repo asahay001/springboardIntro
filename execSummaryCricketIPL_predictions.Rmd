@@ -45,7 +45,7 @@ Based on this widescale interest and potentially large market for educated guess
 
 ## Data Acquisition and Wrangling
 
-To keep this report flowing with more useful insights, I have summarised the steps for data sourcing, cleansing and manipulation, [elsewhere](https://github.com/asahay001/springboardIntro/blob/master/dataWranglingIPLT20.html), or [2](https://github.com/asahay001/springboardIntro/blob/master/dataWranglingIPLT20.Rmd).
+To keep this report flowing with more useful insights, I have summarised the steps for data sourcing, cleansing and manipulation, [elsewhere](https://github.com/asahay001/springboardIntro/blob/master/dataWranglingIPLT20.html) (or [for code](https://github.com/asahay001/springboardIntro/blob/master/dataWranglingIPLT20.Rmd)). Please use http://htmlpreview.github.io to access this html file on GitHub. 
 
 
 ## Approach to model prediction
@@ -87,7 +87,7 @@ When evaluating the potential list of independent variables to build the best-fi
     
   3. _Factors while the 2nd team was batting (Innings 2)_: Revealing in this group was the impact of certain overs even from the 1st innings with respect to runs and wickets.
 
-One of the ways to measure success of predicting a continuous variable, End of Innings Score, is to measure the Root Mean Square Errror of the predictions made at various stages of each of the two innings during a match. While for the categorical variable, Win or Lode prediction, I classified it using a threshold score from the prediction model, and plotted the accuracy of prediction at various stages of the match, as shown below. 
+One of the ways to measure success of predicting a continuous variable, End of Innings Score, is to measure the Root Mean Square Error of the predictions made at various stages of each of the two innings during a match (right graph below). Win or Lose prediction (a categorical variable), has been classified using a threshold score from the prediction model. The accuracy of Win prediction at various stages of a match, is shown on the left, below. 
 
 ```{r PredictionResults, out.width = "50%", fig.align = "default", echo=FALSE, warning=FALSE}
 
@@ -117,8 +117,70 @@ ggplot(mapping = aes(x= Overs, y = RMSE1, color = Innings),
        caption = "IPLT20 Cricket Data 2015 - 2018"
   )
 
-
 ```   
+
+The graphs below show that on the tested 224 matches across 4 seasons, the average difference between actual final score and the predicted final score of either innings is between 16 and 20 runs for predictions made at the end of 6th, 10th and 15th overs respectively. With an average score of 160, it roughly translaes to just over 10% error. 
+
+
+```{r PredictionRunsError, out.width = "50%", fig.align = "default", echo=FALSE, warning=FALSE}
+
+errorRuns_df <- data.frame (season = predRes_df1$season, innings = 1, over = 6, 
+                    inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                    runsError = mean (abs(predRes_df1$inn1EOIRuns - predRes_df1$predO6EOIRuns)))
+newRow_df <- data.frame(season = predRes_df1$season, innings = 1, over = 10,
+                    inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                    runsError = mean (abs(predRes_df1$inn1EOIRuns -predRes_df1$predO10EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+newRow_df <- data.frame(season = predRes_df1$season, innings = 1, over = 15,
+                    inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                    runsError = mean (abs(predRes_df1$inn1EOIRuns -predRes_df1$predO15EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+newRow_df <- data.frame(season = predRes_df1$season, innings = 2, over = 6,
+                    inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                    runsError = mean(abs(predRes_df1$inn2EOIRuns -predRes_df1$predO6EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+newRow_df <- data.frame(season = predRes_df1$season, innings = 2, over = 10,
+                    inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                    runsError =  mean(abs(predRes_df1$inn2EOIRuns -predRes_df1$predO10EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+newRow_df <- data.frame(season = predRes_df1$season, innings = 2, over = 15,
+                    inn1EOIRuns = predRes_df1$inn1EOIRuns, inn2EOIRuns = predRes_df1$inn2EOIRuns,
+                    runsError =  mean(abs(predRes_df1$inn2EOIRuns -predRes_df1$predO15EOIRuns)))
+errorRuns_df <- rbind(errorRuns_df, newRow_df)
+errorRuns_df <- errorRuns_df %>% mutate ( runsError = round(runsError,0),
+  percentageErrorRuns = ifelse(innings == 1,
+                                          round(100 * runsError / inn1EOIRuns, 1),       
+                                          round(100 * runsError / inn2EOIRuns, 1) ) )
+
+errorRuns_df$season <- as.factor(errorRuns_df$season)
+errorRuns_df$innings <- as.factor(errorRuns_df$innings)
+
+ggplot(mapping = aes(x= over, y = runsError, color = innings), 
+                     data = errorRuns_df) +
+  # geom_point(mapping = aes(shape = season)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = c(6, 10, 15)) +
+  labs(x= "Final Score Predictions at various Overs", 
+       y = "Error in Runs Predicted",
+       title = paste("Model is more off for 2nd Innings predictions"),
+       subtitle = paste("Overall error 16-21 runs for each of the innings"),
+       caption = "IPLT20 Cricket Data 2015 - 2018"
+  )
+
+ggplot(mapping = aes(x= over, y = percentageErrorRuns, color = season), 
+                     data = errorRuns_df) +
+  #geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(breaks = c(6, 10, 15)) +
+  labs(x= "Final Score Predictions at various Overs", 
+       y = " % Error in Runs Predicted",
+       title = paste("Predictions get better for 2017 and 2018..."),
+       subtitle = paste("..as more training data is added. Overall about 11% error"),
+       caption = "IPLT20 Cricket Data 2015 - 2018"
+  )
+
+```  
+
 
 Also, the results of predictions for all the 224 matches tested over 4 IPL seasons are better visualized via Confusion Matrices, which show how many times the model could accurately predict a team would win (True-True) and how many times it would lose (False-False):
 
