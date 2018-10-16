@@ -12,12 +12,33 @@ output:
 library ("tidyverse")
 library("dplyr")
 library("ggplot2")
+library("reshape2")
 filesDir <- "C:\\work\\dataScience\\springboard\\springboardIntro"
 setwd(filesDir)
 matSumm <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep = ",",
                     stringsAsFactors = FALSE)
 matDet <- read.csv(file= "wrangled_ballByBallDataIPL.csv", header = TRUE, sep = ",",
                     stringsAsFactors = FALSE)
+# For plotting correlation heatmap with ggplot:
+# Get lower triangle of the correlation matrix
+get_lower_tri<-function(cormat){
+  cormat[upper.tri(cormat)] <- NA
+  return(cormat)
+}
+# Get upper triangle of the correlation matrix
+get_upper_tri <- function(cormat){
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
+}
+# Helper function to reorder the correlation matrix:
+# hclust for hierarchical clustering order is used:  
+  reorder_cormat <- function(cormat){
+    # Use correlation between variables as distance
+    dd <- as.dist((1-cormat)/2)
+    hc <- hclust(dd)
+    cormat <-cormat[hc$order, hc$order]
+  }
+
 #knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -56,33 +77,70 @@ b) Plots of variables to see if trends exist
 ### Correlations among variables
 
 1. Running a correlation fucntion for the Over stats (independent variables) against the depenent variable, *Runs Scored By A Team in an innings* shows that _correlation with EOI Runs (End of the Innings score) is higher as the number of overs played increases_: over 6 runs and wickets have higher corelation than over 4 or 5. Also, *Runs scored* has a *positive correlation with EOI Runs*, while *Wickets lost* has a *negative impact* on the End of Innings score:
+
 ```{r CorelationsFinalScore, echo=FALSE, warning=FALSE}
-cor(na.omit(subset(matSumm, na.rm = TRUE, 
-                select = c("Inn1EOIRuns", "Over2Runs", "Over2Wkts","Over3Runs", "Over3Wkts", 
-                            "Over4Runs", "Over4Wkts", "Over5Runs", "Over5Wkts",
-                            "Over6Runs", "Over6Wkts" ))))
+matSumm_cor1 <- na.omit(subset(matSumm, na.rm = TRUE, 
+                               select = c("Inn1EOIRuns", "Over3Runs", "Over3Wkts","Over6Runs", "Over6Wkts", 
+                                          "Over10Runs", "Over10Wkts", "Over13Runs", "Over13Wkts",
+                                          "Over15Runs", "Over15Wkts")))
+matSumm_cor1<- round(cor(matSumm_cor1),2)
+
+cormat <- reorder_cormat(matSumm_cor1)
+upper_tri <- get_upper_tri(cormat)
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+ggplot(melted_cormat, aes(Var2, Var1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal()+ # minimal theme
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed() +
+  labs(x= "Correlation Variables X", y = "Correlation Variables Y",
+       title = paste("Positive Increasing EOI Score Correlation with Runs in Later Overs"),
+       subtitle = paste("And negative, decreasing correlation with Overs for Wickets Lost"),
+       caption = "IPL T20 2008 - 2017" )
+
 
 ```
 
-2. Next, checking the correlation between a team winning a current match with matches won against that same opponent recently, shows that the *last match result is not so consequential as a winning streak against the same opponent over the last 5 matches*. In the result below, the code is checking for the performance of the team that is batting first in this current match with its past results against the same team:
+2. Next, checking the correlation between a team winning a current match with matches won against that same opponent recently, shows that the *last match result is not as consequential as a winning streak against the same opponent over the last 5 matches*. Lso, correlation between a) a team batting first winning its current match, b) its wining percentage record against all teams, c) and the winning percentage record of its opponent (the team that will bat second in this match), shows *a weak correlation with the past records*, again indicating that each match is decided on how well the team plays on that given day. 
+
 ```{r CorrelationsMatchWinnerFoe, echo=FALSE, warning=FALSE}
-matSumm_cor2 <- na.omit(subset(matSumm, na.rm = TRUE, 
-                               select = c("TeamBattingFirstWon", "BatFirstWonLastMat", 
-                                          "BatFirstWinsInLast3Mat", "BatFirstWinsInLast5Mat" )))
-cor(matSumm_cor2)
-```
-3. Finally, checking the correlation between a) a team batting first winning its current match, b) its wining percentage record against all teams, c) and the winning percentage record of its opponent (theteam that will bat second in this match), shows *a weak correlation with the past records*, again indicating that each match is decided on how well the team plays on that given day:
-
-```{r CorrelationsMatchWinnerAll, echo=FALSE, warning=FALSE}
-matSumm_cor4 <- na.omit(subset(matSumm, na.rm = TRUE, 
+# In the result below, the code is checking for the performance of the team that is batting first #in this current match with its past results against the same team, and also the two teams' #winning record against all opponents:
+matSumm_cor5 <- na.omit(subset(matSumm, na.rm = TRUE, 
                                select = c("TeamBattingFirstWon", "BatFirstMatchesWon", 
                                           "BatFirstWinPercentage", "BatSecondMatchesWon",
-                                          "BatSecondWinPercentage")))
-cor(matSumm_cor4)
+                                          "BatSecondWinPercentage", "BatFirstWonLastMat", 
+                                          "BatFirstWinsInLast3Mat", "BatFirstWinsInLast5Mat",
+                                          "BatSecondWonLastMat", 
+                                          "BatSecondWinsInLast3Mat", "BatSecondWinsInLast5Mat" )))
+matSumm_cor5 <- round(cor(matSumm_cor5),2) 
+
+cormat <- reorder_cormat(matSumm_cor5)
+upper_tri <- get_upper_tri(cormat)
+# Melt the correlation matrix
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+# Create a ggheatmap:
+ggplot(melted_cormat, aes(Var2, Var1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal()+ # minimal theme
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed() +
+  labs(x= "Correlation Variables X", y = "Correlation Variables Y",
+       title = paste("Correlation of Team 1 Winning a Match"),
+       subtitle = paste("Most significant is 'wins in last 5 matches'"),
+       caption = "IPL T20 2008 - 2017" )
+
 ```
 
 
-## Plotting the data
+## Plotting variations and covariations in variables
 
 I have saved the plots in plots.pdf file in the following github directory: https://github.com/asahay001/springboardIntro. The R file to produce the plots is called dataExploreMatchScorePrediction.R 
 

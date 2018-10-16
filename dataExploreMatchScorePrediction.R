@@ -2,6 +2,7 @@
 # set env
 # install.packages ("dplyr")
 # install.packages ("tidyverse")
+# install.packages ("reshape")
 
 # Set files dirctory from where to read data (csv files). 
 filesDir <- "C:\\work\\dataScience\\springboard\\springboardIntro"
@@ -10,6 +11,7 @@ filesDir <- "C:\\work\\dataScience\\springboard\\springboardIntro"
 library ("tidyverse")
 library("dplyr")
 library("ggplot2")
+library("reshape2")
 
 # Read the wrangled match summary csv files previously prepared by scorePred_ver1.R
 matSumm <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep = ",",
@@ -19,12 +21,18 @@ matSumm <- read.csv(file= "wrangled_matchSummaryDataIPL.csv", header = TRUE, sep
 #########################################
 
 # First, check the correlation among different independent variables:
-matSumm_cor1 <- na.omit(subset(matSumm, na.rm = TRUE, 
+matSumm_cor0 <- na.omit(subset(matSumm, na.rm = TRUE, 
                                select = c("Inn1EOIRuns", "Over2Runs", "Over2Wkts","Over3Runs", "Over3Wkts", 
                                           "Over4Runs", "Over4Wkts", "Over5Runs", "Over5Wkts",
                                           "Over6Runs", "Over6Wkts" 
                                           )))
-cor(matSumm_cor1)
+cor(matSumm_cor0)
+matSumm_cor1 <- na.omit(subset(matSumm, na.rm = TRUE, 
+                               select = c("Inn1EOIRuns", "Over3Runs", "Over3Wkts","Over6Runs", "Over6Wkts", 
+                                          "Over10Runs", "Over10Wkts", "Over13Runs", "Over13Wkts",
+                                          "Over15Runs", "Over15Wkts" 
+                               )))
+matSumm_cor1<- round(cor(matSumm_cor1),2)   ## We will plot this later
 # As expected, correlation with EOI Runs is higher as the number of overs played increases; 
 # Runs scored have a positive correlation with EOI Runs and Wickets lost have a negative impact.
 
@@ -47,16 +55,99 @@ matSumm_cor4 <- na.omit(subset(matSumm, na.rm = TRUE,
                                           "BatSecondWinPercentage")))
 cor(matSumm_cor4)
 
+matSumm_cor5 <- na.omit(subset(matSumm, na.rm = TRUE, 
+                               select = c("TeamBattingFirstWon", "BatFirstMatchesWon", 
+                                          "BatFirstWinPercentage", "BatSecondMatchesWon",
+                                          "BatSecondWinPercentage", "BatFirstWonLastMat", 
+                                          "BatFirstWinsInLast3Mat", "BatFirstWinsInLast5Mat",
+                                          "BatSecondWonLastMat", 
+                                          "BatSecondWinsInLast3Mat", "BatSecondWinsInLast5Mat" )))
+matSumm_cor5 <- round(cor(matSumm_cor5),2)     ## We will plot this later
+
+#ggplot(data = matSumm_cor1M, aes(x=Var1, y=Var2, fill=value)) + 
+#   geom_tile()
+# Borrowing the correlation matric plot idea from STHDA site:
+# http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
+
+# A correlation matrix has redundant information. We’ll use the functions below to set half of it to NA.
+#Helper functions :
+# Get lower triangle of the correlation matrix
+get_lower_tri<-function(cormat){
+  cormat[upper.tri(cormat)] <- NA
+  return(cormat)
+}
+# Get upper triangle of the correlation matrix
+get_upper_tri <- function(cormat){
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
+}
+# Helper function to reorder the correlation matrix:
+# hclust for hierarchical clustering order is used:  
+  reorder_cormat <- function(cormat){
+    # Use correlation between variables as distance
+    dd <- as.dist((1-cormat)/2)
+    hc <- hclust(dd)
+    cormat <-cormat[hc$order, hc$order]
+  }
+
 dev.off()  # remove all old plots
 
+# Create a plot 1st for dev.copy() to work now; otherwise complains of null device
 
 summary_df1 <- matSumm %>% group_by(winner) %>% summarize(MatchesWon = n())
 ggplot(mapping = aes(x = reorder(winner, MatchesWon), y = MatchesWon), data = summary_df1) +
   geom_bar(stat = "identity") +
   coord_flip()
 
-dev.copy(pdf, "plots.pdf")   # Needed to create a plot 1st above for this command to work; otherwise complains of null device
-# Before looking at covariations among independent variables, let's explore variation within the 2
+dev.copy(pdf, "plots.pdf")  
+
+# Correlation plots:
+# Reordered correlation data visualization :
+# Reorder the correlation matrix according to the correlation coefficient. 
+# This is useful to identify the hidden pattern in the matrix.
+cormat <- reorder_cormat(matSumm_cor1)
+upper_tri <- get_upper_tri(cormat)
+# Melt the correlation matrix
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+# Create a ggheatmap. In the plot below:
+# negative correlations are in blue color and positive correlations in red. The function scale_fill_gradient2 is used with the argument limit = c(-1,1) as correlation coefficients range from -1 to 1.
+# coord_fixed() : this function ensures that one unit on the x-axis is the same length as one unit on the y-axis.
+#
+ggplot(melted_cormat, aes(Var2, Var1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal()+ # minimal theme
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed() +
+  labs(x= "Correlation Variables X", y = "Correlation Variables Y",
+       title = paste("Positive Increasing EOI Score Correlation with Runs in Later Overs"),
+       subtitle = paste("And negative, decreasing correlation with Overs for Wickets Lost"),
+       caption = "IPL T20 2008 - 2017" )
+
+# Now do the Winner correlation matrix plot:
+cormat <- reorder_cormat(matSumm_cor5)
+upper_tri <- get_upper_tri(cormat)
+# Melt the correlation matrix
+melted_cormat <- melt(upper_tri, na.rm = TRUE)
+# Create a ggheatmap:
+ggplot(melted_cormat, aes(Var2, Var1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal()+ # minimal theme
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed() +
+  labs(x= "Correlation Variables X", y = "Correlation Variables Y",
+       title = paste("Correlation of Team 1 Winning a Match"),
+       subtitle = paste("Most significant is 'wins in last 5 matches'"),
+       caption = "IPL T20 2008 - 2017" )
+
+# Next, before looking at covariations among independent variables, let's explore variation within the 2
 # independent variables, one at a time: match winners, and runs scored in each innings
 summary_df1 <- matSumm %>% group_by(winner) %>% summarize(MatchesWon = n())
 ggplot(mapping = aes(x = reorder(winner, MatchesWon), y = MatchesWon), data = summary_df1) +
