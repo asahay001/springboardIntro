@@ -1,5 +1,5 @@
 ---
-title:  "Final Capstone Report: Cricket IPL T20 Predictions"
+title:  "Capstone Final Report: Cricket IPL T20 Predictions"
 author: "Amitav Sahay"
 date:   "October 12, 2018"
 output: html_document
@@ -59,7 +59,7 @@ With the help of R, I looked at the correlations between the variables, where th
 2. Matches were so close most of the time, that the result of the _last match_ between two teams did not appear to have any bearing on today's game
 3. Losing the toss or playing away from your home ground also did not appear to sway the results as most of the teams coped with any such perceived disadvantages. 
 4. The most significant factors for winning seemed to be how the teams played on that specific day: positive relationship with the number of runs scored at the end of specific overs, and negative relationship with the number of wickets lost early on. 
-For more details on data exploration and findings, please click [here](https://github.com/asahay001/springboardIntro/blob/master/dataExploration.Rmd). And the pictorial representation of the data exploration is in these [plots](https://github.com/asahay001/springboardIntro/blob/master/plots.pdf).
+For more details on data exploration and findings, please click [here](https://github.com/asahay001/springboardIntro/blob/master/dataExploration.html).Please use http://htmlpreview.github.io to access this html file on GitHub
 
 
 ### Building a predictive model, or really a set of them!
@@ -67,12 +67,12 @@ For more details on data exploration and findings, please click [here](https://g
 With so many variables in play, the teams so evenly balanced, the results often too close to call till the last couple of overs, and multiple models to build, manual trial and error to choose the best model for each of the predictions was not the right aproach. Also, because the match fluctuates as it progresses, I decided I needed to model my predictions at periodic points of the match: 
 
   a) _match winner_ at the start of each game, 
-  b) at the end of innings one (1st team's batting), 
-  c) at the end of 2nd team's 6th, 10th and 15th overs.
-  d) And _end of innings_ score prediction for _each team_ at the end of their respective:
-  e) 6th over (significance of 6 overs is that it marks the end of PowerPlay),
-  f) 10th over, and
-  g) 15th over.
+      * at the end of innings one (1st team's batting), 
+      * at the end of 2nd team's 6th, 10th and 15th overs.
+  b) And _end of innings_ score prediction for _each team_ at the end of their respective:
+      * 6th over (significance of 6 overs is that it marks the end of PowerPlay),
+      * 10th over, and
+      * 15th over.
 
 When evaluating the potential list of independent variables to build the best-fit linear models, I considered 2 alternatives in R: choose the model either based on i) adjusted R^2, or ii) the lowest AIC. Because R has a handy automated *step* fucntion to build the most suitable linear model based on lowest AIC from a large list of variables, I went with this option, over choosing the adjusted R^2 and _leaps_ function.  
 
@@ -218,6 +218,16 @@ paste ("Winner Prediction after 35 Overs: Accuracy is", accuracy35Over, "%")
 ## <a id="conclusion"></a>Conclusion
 
 Data Exploration of all IPL T20 data from beggining to now shows most teams are evenly balanced, many teams have a strong chance of winning a match against its opponent and indeed results between two teams go either way in close finishes. Even though home ground advantage and winning the toss are not significant in match results, with the help of data science and feature enginnering, resulting prediction models can help the fans on the ground or engaged in wagering, and TV broadcasters, predict final socres and match winners with reasonable accuracy. The models show that the most significant factors in today's outcome are not as much past performances as how they play today. Because its today's on-ground performance that counts most in these tight games, it is no suprise that the accuracy improves as the match progresses and predictions are updated periodically. Even with my nascent data science skills, the model can predict a match winner even before a ball is bowled with about 63 % accuracy, which improves to 76% when 10 overs are still left in a match and which is when a match truly becomes gripping, and to almost 80 % by the 35th over (4 out of 5 correct calls). Models show that total runs scored at the end of specific overs and number of wickets lost at the end of the same or a different set of specific overs within a team's batting innings, ultimately are significant in predicting the outcome of a match and the scores the two teams put up. 
+
+## Recommendations for using these findings
+
+As a T20 cricket match enters the 2nd half of the 2nd innings (11th over), season after season, tensions run high in these closely contested IPL cricket matches. Its this final build up that gets people's adrenalin going. If at this stage, in the 10th over, the 15th over, fans are fed keen insights into which of the two teams is more likley to win, it would add to the frenzy, the excitement, and heightened discussion on these data science predictions. It will add a new dimension as spectators would use their own gut and judgement to accept or challenge data science speculations. 
+
+In fact with the acceptance of franchise cricket (it was a novel concept in cricket when it was launched and people were used to seeing players representing only their home countries, not a congregation of the world's best for inter-club rivalry), speactators would welcome such predictions from the outset of each match. So show them the predictions of who is likely to win this particular match and what target will the team batting 1st set for the second team, right after the 1st Powerplay ends at the end of the 6th over, and then revise predictions using new on-field data at various stages of each innings as outlined earlier.
+
+Are you listening _TV broadcasters_? The TV audience is waiting for such periodic projections. Same goes for the _stadium management team_: add to the fun; get the game-goer involved even more by flashing on the big screen what the computer thinks will happen! Compare how off was the computer with what happened on the field a few overs later. And finally, _wagering sites_ where you are legal, help out the betters with insight; wouldn't they gladly pay for it if the accuracy is high!   
+
+
 
 ## Ideas for improvement
 
