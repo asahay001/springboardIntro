@@ -6,7 +6,7 @@ output: html_document
 ---
 
 This folder contains the Final Capstone project for "Introduction to Data Science with R".
-The project is about using data science principles and R to predict a match winner in an ongoing IPL T20 cricket match,and also what target will the team batting first set for the team batting 2nd in its maximum alloted 20 overs. TV broadcasters and spectactors will beneift from these predictions made with increasing accuracy as a match progreses. 
+The project is about using data science principles and R to predict a match winner in an ongoing IPL T20 cricket match, and also what target will the team batting first set for the team batting 2nd in its maximum alloted 20 overs. TV broadcasters and spectactors will beneift from these predictions made with increasing accuracy as a match progreses. 
 
 https://github.com/asahay001/springboardIntro
 
@@ -67,28 +67,58 @@ plots.pdf
 
 ### Raw csv files from source
 
-ipl2018deliveries_raw.csv         IPL Test data containing 2018 season: ball by ball
-ipl2018Match_raw.csv              IPL Test data containing 2018 season: 1 row per match
-Match.csv                         IPL data 2008-2017 season: 1 row per match
-Player.csv                        IPL data 2008-2017 season: player details; not used
-Player_match.csv                  IPL data 2008-2017 season: players for a match
-Ball_By_Ball.csv                  IPL data 2008-2017 season: details of each ball
-Team.csv                          IPL data 2008-2017 season: names of franchises
+ipl2018deliveries_raw.csv         
+IPL Test data containing 2018 season: ball by ball
+
+ipl2018Match_raw.csv              
+IPL Test data containing 2018 season: 1 row per match
+
+Match.csv                         
+IPL data 2008-2017 season: 1 row per match
+
+Player.csv                        
+IPL data 2008-2017 season: player details; not used
+
+Player_match.csv                  
+IPL data 2008-2017 season: players for a match
+
+Ball_By_Ball.csv                  
+IPL data 2008-2017 season: details of each ball
+
+Team.csv                          
+IPL data 2008-2017 season: names of franchises
 
 
 ### R-produced data files
 
-IPL_PredictionParameters_AIC.xlsx               Relevant variables in predictions
-MatchByMatchResultPredictionsIPL.csv            Test results of Prediction 2015-2018
-MatchPredictionErrorsIPL2015_18.csv             Errors in Prediction 2015-2018
+IPL_PredictionParameters_AIC.xlsx               
+Relevant variables in predictions
+
+MatchByMatchResultPredictionsIPL.csv            
+Test results of Prediction 2015-2018
+
+MatchPredictionErrorsIPL2015_18.csv             
+Errors in Prediction 2015-2018
+
 WinPredictionAccuracyIPL2015_18.csv
+
 RMSERunsPredictionIPL2015_18.csv
+
 SummarizedResultPredictionsTestData2018IPL.csv
+
 SummarizedResultPredictionsIPL.csv
+
 wrangled_matchSummaryDataIPL2018only
-wrangled_matchSummaryDataIPL.csv                2008 - 2015 data: 1 row per match
-wrangled_ballByBallDataIPL.csv                  2008 - 2015 data: each ball as a row
-wrangled_inningsSummaryDataIPL.csv              2008 - 2015 data: 1 row per innings; not used
+
+wrangled_matchSummaryDataIPL.csv                
+2008 - 2015 data: 1 row per match
+
+wrangled_ballByBallDataIPL.csv                  
+2008 - 2015 data: each ball as a row
+
+wrangled_inningsSummaryDataIPL.csv              
+2008 - 2015 data: 1 row per innings; not used
+
 
 
 Many thanks to Nathan Sutton for his insights, guidance and encouragement throughout the project.
