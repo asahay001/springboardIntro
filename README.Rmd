@@ -24,24 +24,44 @@ To read html files on GitHub, please use  http://htmlpreview.github.io
 
 ## Documentation Files
 
-execSummaryCricketIPL_predictions.html  Final report : knit file
-dataExploration.html                    Graphs and correlations: knit file
-dataWranglingIPLT20.html                Details on data manipulations: knit file
-
-execSummaryCricketIPL_predictions.Rmd   Final report
-dataExploration.Rmd                     Graphs and correlations
-dataWranglingIPLT20.Rmd                 Details on data manipulations
+execSummaryCricketIPL_predictions.html  
+  Final report : knit file
+  
+dataExploration.html                    
+  Graphs and correlations: knit file
+  
+dataWranglingIPLT20.html                
+  Details on data manipulations: knit file
+  
+execSummaryCricketIPL_predictions.Rmd   
+  Final report
+dataExploration.Rmd                     
+  Graphs and correlations
+dataWranglingIPLT20.Rmd                 
+  Details on data manipulations
 
 ## R Program Files
 
-interactiveEOIRunAndMatchWinnerPrediction.R Driver code to run predictions on treated data
-fittingBestModelsForEOIRunsPrediction.R     Functions that are called by driver program
-scorePred_ver1.R                            Data wrangling code for 2008-2017 data files
-dataWrangling_2018IPLDataForTestingProjectWork.R    Data Wrangling for 2018 season data file
-dataExploreMatchScorePrediction.R           Data Exploration code
+interactiveEOIRunAndMatchWinnerPrediction.R 
+  Driver code to run predictions on treated data
+  
+fittingBestModelsForEOIRunsPrediction.R     
+  Functions that are called by driver program
+  
+scorePred_ver1.R                            
+  Data wrangling code for 2008-2017 data files
+  
+dataWrangling_2018IPLDataForTestingProjectWork.R    
+  Data Wrangling for 2018 season data file
+  
+dataExploreMatchScorePrediction.R           
+  Data Exploration code
+  
 
 ## Plots
-plots.pdf         Graphs plotted during data exploration of 2008-2017 data
+plots.pdf         
+  Graphs plotted during data exploration of 2008-2017 data
+  
 
 ## Data Files
 
@@ -69,6 +89,7 @@ wrangled_matchSummaryDataIPL2018only
 wrangled_matchSummaryDataIPL.csv                2008 - 2015 data: 1 row per match
 wrangled_ballByBallDataIPL.csv                  2008 - 2015 data: each ball as a row
 wrangled_inningsSummaryDataIPL.csv              2008 - 2015 data: 1 row per innings; not used
+
 
 Many thanks to Nathan Sutton for his insights, guidance and encouragement throughout the project.
 
