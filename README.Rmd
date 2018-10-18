@@ -42,7 +42,7 @@ dataWranglingIPLT20.Rmd
 
 ## R Program Files
 
-interactiveEOIRunAndMatchWinnerPrediction.R 
+interactiveEOIRunAndMatchWinnerPrediction.R        
   Driver code to run predictions on treated data
   
 fittingBestModelsForEOIRunsPrediction.R     
@@ -121,5 +121,6 @@ wrangled_inningsSummaryDataIPL.csv
 
 
 
-Many thanks to Nathan Sutton for his insights, guidance and encouragement throughout the project.
+
+### Many thanks to Nathan Sutton for his insights, guidance and encouragement throughout the project.
 
