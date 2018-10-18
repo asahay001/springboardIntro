@@ -24,6 +24,9 @@ To read html files on GitHub, please use  http://htmlpreview.github.io
 
 ## Documentation Files
 
+CapstoneFinalPresentation_IPLT20CricketPredictions.pptx
+  Presentation Deck for the IPL T20 prediction project
+  
 execSummaryCricketIPL_predictions.html  
   Final report : knit file
   
