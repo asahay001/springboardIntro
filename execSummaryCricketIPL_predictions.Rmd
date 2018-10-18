@@ -119,7 +119,7 @@ ggplot(mapping = aes(x= Overs, y = RMSE1, color = Innings),
 
 ```   
 
-The graphs below show that on the tested 224 matches across 4 seasons, the average difference between actual final score and the predicted final score of either innings is between 16 and 20 runs for predictions made at the end of 6th, 10th and 15th overs respectively. With an average score of 160, it roughly translaes to just over 10% error. 
+The graphs below show that on the tested 224 matches across 4 seasons, the average difference between actual final score and the predicted final score of either innings is between 16 and 20 runs for predictions made at the end of 6th, 10th and 15th overs respectively. With an average score of 160, it roughly translates to just over 10% error. 
 
 
 ```{r PredictionRunsError, out.width = "50%", fig.align = "default", echo=FALSE, warning=FALSE}
@@ -221,7 +221,7 @@ Data Exploration of all IPL T20 data from beggining to now shows most teams are 
 
 ## Recommendations for using these findings
 
-As a T20 cricket match enters the 2nd half of the 2nd innings (11th over), season after season, tensions run high in these closely contested IPL cricket matches. Its this final build up that gets people's adrenalin going. If at this stage, in the 10th over, the 15th over, fans are fed keen insights into which of the two teams is more likley to win, it would add to the frenzy, the excitement, and heightened discussion on these data science predictions. It will add a new dimension as spectators would use their own gut and judgement to accept or challenge data science speculations. 
+As a T20 cricket match enters the 2nd half of the 2nd innings (11th over), season after season, tensions run high in these closely contested IPL cricket matches. Its this final build up that gets people's adrenaline going. If at this stage, in the 10th over, the 15th over, fans are fed keen insights into which of the two teams is more likley to win, it would add to the frenzy, the excitement, and heightened discussion on these data science predictions. It will add a new dimension as spectators would use their own gut and judgement to accept or challenge data science speculations. 
 
 In fact with the acceptance of franchise cricket (it was a novel concept in cricket when it was launched and people were used to seeing players representing only their home countries, not a congregation of the world's best for inter-club rivalry), speactators would welcome such predictions from the outset of each match. So show them the predictions of who is likely to win this particular match and what target will the team batting 1st set for the second team, right after the 1st Powerplay ends at the end of the 6th over, and then revise predictions using new on-field data at various stages of each innings as outlined earlier.
 
