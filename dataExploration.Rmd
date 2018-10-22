@@ -335,7 +335,7 @@ ggplot(mapping = aes(x=Over15Runs, y = Inn1EOIRuns), data = matSumm) +
  Finally let's examine the plot for wickets lost at the end of 6th, 10th and 15th overs. We look at the covariation between 2 continuous variables by binning one of the 2 continuous variables (Wickets Lost):
  
 ```{r DuringMatch_Wkts, out.width = "33%", fig.align = "default", echo=FALSE, warning=FALSE}
-ggplot(data = matSumm, mapping = aes(x = Over6Wkts, y = Inn1EOIRuns)) +
+ggplot(data = matSumm, mapping = aes(x = factor(Over6Wkts), y = Inn1EOIRuns)) +
   geom_boxplot(mapping = aes(group = cut_width(Over6Wkts, 1)), varwidth = TRUE) +
   labs(x= "Wickets Lost at the end of 6 overs", 
        y = "Final score (End of Innings)",
@@ -343,16 +343,18 @@ ggplot(data = matSumm, mapping = aes(x = Over6Wkts, y = Inn1EOIRuns)) +
        subtitle = paste("  Recovering to a 'good' score after losing 3 or more wickets seems difficult"),
        caption = "IPL T20 2008-2017"
   )
-ggplot(data = matSumm, mapping = aes(x = Over10Wkts, y = Inn1EOIRuns)) +
+ggplot(data = matSumm, mapping = aes(x = factor(Over10Wkts), y = Inn1EOIRuns)) +
   geom_boxplot(mapping = aes(group = cut_width(Over10Wkts, 1)), varwidth = TRUE) +
-  labs(x= "Wickets Lost at the end of 10 overs", 
+  scale_x_discrete("Wickets Lost at the end of 10 overs") +
+  labs(#x= "Wickets Lost at the end of 10 overs", 
        y = "Final score (End of Innings)",
        title = paste("Teams that preserve wickets seem to score more"),
        subtitle = paste("  Recovering to a 'good' score after losing 5 or more wickets seems difficult"),
        caption = "IPL T20 2008-2017"
   )
-ggplot(data = matSumm, mapping = aes(x = Over15Wkts, y = Inn1EOIRuns)) +
+ggplot(data = matSumm, mapping = aes(x = factor(Over15Wkts), y = Inn1EOIRuns)) +
   geom_boxplot(mapping = aes(group = cut_width(Over15Wkts, 1)), varwidth = TRUE) +
+  scale_x_discrete(limits = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10)) +
   labs(x= "Wickets Lost at the end of 15 overs", 
        y = "Final score (End of Innings)",
        title = paste("Deep into the innings"),
