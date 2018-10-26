@@ -1,0 +1,33 @@
+---
+title: "Applying Machine Learning to Capstone Project"
+author: "Amitav Sahay"
+date: "October 26, 2018"
+output: html_document
+---
+
+#How do you frame your main question as a machine learning problem? Is it a supervised or unsupervised problem? If it is supervised, is it a regression or a classification?
+
+Between 2 teams playing in any IPL T20 cricket match, which of the two team will wi tonight? And how many runs will the team batting first score in its assigned maximum 20 overs? How accurate are our predictions at different stages of a match? 
+
+It is a supervised problem, where we have training data for each of the matches for seasons 2008-2014. Based on this learning, the model will be iteratively tested and refined on 2015, 2016, 2017 and finally 2018 season data. A total of over 600 matches. 
+
+Score prediction is a linear regression problem since score (runs scored by a team) is a continuous variable. Predicting the match winner is a classification problem, and logistics regression technique will be appropriate. 
+
+#What are the main features (also called independent variables or predictors) that you'll use?
+
+Indepenedent variables used will be the match situation at the end of each over: runs scored, wickets lost, and maximum remaining overs. SO if the score prediction is being made at the end of 6th over, then runs scored and wickets lost at end of each of the 1st, 2nd, 3rd, 4th, 5th and 6th overs. 
+Additionally, variables like who won the toss, where is the macth being played, what have the past results been between the 2 teams playing today, and each of these two teams' overall win record will be used. 
+
+
+#Which machine learning technique will you use?
+
+I will use linear regression modeling to predict each team's final score in a match. Since there are a lot of independent variables, and because these predcitions are made multiple times at diffeerent stages of the match (end of 6th, 10, 15th overs of each innings) using different sets of independent variables, I will use an automated method of choosing the best fit model: R offers stepwise regression with the step() function using AIC to compare quality of models. That is my choice for this project. 
+
+
+#How will you evaluate the success of your machine learning technique? What metric will you use?
+
+I will successively test the models on test data for each new season: 2015, then 2016, then 2017, and finally 2018 season matches, in all 224 matches.
+For end of innings score prediction validation, I will compute Root Mean Square Error (RMSE). 
+For match winner prediction, I will compute the model accuracy from Confusion (Classification) matrices that I will create for each of the test season's matches.
+Predictions made deeper into a match (later stages) should be more accurate than those made towards the start of a match. 
+
